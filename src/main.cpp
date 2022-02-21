@@ -12,6 +12,7 @@ using namespace std;
 // 你的代码编辑器/IDE 很可能找不到这个文件, 然后会给你报错 (虽然编译不会出错)
 // 看起来会很烦人, 于是干脆采用这种看起来 dirty 但实际很有效的手段
 extern FILE *yyin;
+extern FILE *yyout;
 extern int yyparse(unique_ptr<BaseAST> &ast);
 
 int main(int argc, const char *argv[]) {
@@ -25,6 +26,9 @@ int main(int argc, const char *argv[]) {
   // 打开输入文件, 并且指定 lexer 在解析的时候读取这个文件
   yyin = fopen(input, "r");
   assert(yyin);
+
+  //打开输出文件
+  yyout = fopen(output, "w");
 
   // parse input file
   unique_ptr<BaseAST> ast;
