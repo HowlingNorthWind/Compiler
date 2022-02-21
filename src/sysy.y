@@ -1,7 +1,6 @@
 %code requires {
   #include <memory>
   #include <string>
-  #include "ast.h"
 }
 
 %{
@@ -13,7 +12,7 @@
 
 // 声明 lexer 函数和错误处理函数
 int yylex();
-void yyerror(std::unique_ptr<std::string> &ast, const char *s);
+void yyerror(std::unique_ptr<BaseAST> &ast, const char *s);
 
 using namespace std;
 
@@ -84,7 +83,8 @@ FuncDef
 FuncType
   : INT {
     auto ast = new FuncTypeAST();
-    ast->func_type_str = new string("int");
+    string str = "int";
+    ast->func_type_str = str;
     $$ = ast;
   }
   ;
@@ -107,7 +107,7 @@ Stmt
 
 Number
   : INT_CONST {
-    $$ = to_string($1);
+    $$ = $1;
   }
   ;
 
@@ -115,6 +115,6 @@ Number
 
 // 定义错误处理函数, 其中第二个参数是错误信息
 // parser 如果发生错误 (例如输入的程序出现了语法错误), 就会调用这个函数
-void yyerror(unique_ptr<string> &ast, const char *s) {
+void yyerror(unique_ptr<BaseAST> &ast, const char *s) {
   cerr << "error: " << s << endl;
 }
