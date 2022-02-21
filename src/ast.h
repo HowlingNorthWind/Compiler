@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+extern FILE *yyout;
 // 所有 AST 的基类
 class BaseAST {
  public:
@@ -35,12 +36,23 @@ class FuncDefAST : public BaseAST {
     // std::cout << ", " << ident << ", ";
     // block->Dump();
     // std::cout << " }";
+    // std::cout << "fun @";
+    // std::cout << ident << "(): ";
+    // func_type->Dump();
+    // std::cout << " { "<<std::endl;
+    // block->Dump();
+    // std::cout << " }";
+    fprintf(yyout, "fun @");
+    fprintf(yyout, ident.c_str());
+    fprintf(yyout, "(): ");
     std::cout << "fun @";
     std::cout << ident << "(): ";
     func_type->Dump();
+    fprintf(yyout, " { \n");
     std::cout << " { "<<std::endl;
     block->Dump();
-    std::cout << " }";
+    fprintf(yyout, "}");
+    std::cout << "}";
   }
 };
 
@@ -52,6 +64,7 @@ class FuncTypeAST : public BaseAST {
   void Dump() const override {
     if(func_type_str == "int")
     {
+        fprintf(yyout, "i32");
         std::cout << "i32";
     } 
   }
@@ -63,10 +76,14 @@ class BlockAST : public BaseAST {
   std::unique_ptr<BaseAST> stmt;
 
   void Dump() const override {
+    fprintf(yyout, "%%");
+    fprintf(yyout, "entry");
+    fprintf(yyout, ":\n");
     std::cout << "%";
     std::cout << "entry";
     std::cout << ":"<<std::endl;
     stmt->Dump();
+    fprintf(yyout, "\n");
     std::cout << std::endl;
   }
 };
@@ -77,6 +94,8 @@ class StmtAST : public BaseAST {
   int number;
 
   void Dump() const override {
+    fprintf(yyout, "  ret ");
+    fprintf(yyout, std::to_string(number).c_str());
     std::cout <<"  "<< "ret ";
     std::cout << number;
   }
