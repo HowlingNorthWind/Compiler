@@ -25,7 +25,7 @@ class FuncDefAST : public BaseAST {
 // FuncType 也是 BaseAST
 class FuncTypeAST : public BaseAST {
  public:
-  
+  std::string func_type_str;
 };
 
 // Block 也是 BaseAST
