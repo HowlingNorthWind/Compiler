@@ -1,9 +1,9 @@
+#include "ast.h"
 #include <cassert>
 #include <cstdio>
 #include <iostream>
 #include <memory>
 #include <string>
-#include "ast.h"
 using namespace std;
 
 // 声明 lexer 的输入, 以及 parser 函数
@@ -14,6 +14,8 @@ using namespace std;
 extern FILE *yyin;
 extern FILE *yyout;
 extern int yyparse(unique_ptr<BaseAST> &ast);
+
+
 
 int main(int argc, const char *argv[]) {
   // 解析命令行参数. 测试脚本/评测平台要求你的编译器能接收如下参数:
@@ -35,9 +37,12 @@ int main(int argc, const char *argv[]) {
   auto ret = yyparse(ast);
   assert(!ret);
 
+  string str0 = "";
   // dump AST
-  ast->Dump();
+  ast->Dump(str0);
   cout << endl;
+
+  cout<< str0 <<endl;
 
   // 输出解析得到的 AST, 其实就是个字符串
   // cout << *ast << endl;
