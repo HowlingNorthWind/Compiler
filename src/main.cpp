@@ -1,10 +1,11 @@
+#include "koopa.h"
 #include "ast.h"
 #include <cassert>
 #include <cstdio>
 #include <iostream>
 #include <memory>
 #include <string>
-#include "koopa.h"
+#include <string.h>
 using namespace std;
 
 // 声明 lexer 的输入, 以及 parser 函数
@@ -29,12 +30,47 @@ void Visit(const koopa_raw_integer_t &integer);
 // 访问 raw program
 void Visit(const koopa_raw_program_t &program) {
   // 执行一些其他的必要操作
-  // ...
   cout<<"  .text "<<endl;
-  cout<<"  .global main"<<endl;
-  cout<<"main:"<<endl;
-  cout<<"  li a0, 0"<<endl;
-  cout<<"  ret   "<<endl;
+  fprintf(yyout, "  .text ");
+  fprintf(yyout, "\n");
+  for (size_t i = 0; i < program.values.len; ++i) {
+  // 正常情况下, 列表中的元素就是变量, 我们只不过是在确认这个事实
+  // 当然, 你也可以基于 raw slice 的 kind, 实现一个通用的处理函数
+  assert(program.values.kind == KOOPA_RSIK_VALUE);
+  // 获取当前变量
+  koopa_raw_function_t value = (koopa_raw_function_t) program.values.buffer[i];
+
+  // 进一步处理全局变量
+  cout<<value->name<<endl;
+  fprintf(yyout,"%s", value->name);
+  fprintf(yyout, "\n");
+}
+  cout<<"  .global ";
+  fprintf(yyout, "  .global ");
+  for (size_t i = 0; i < program.funcs.len; ++i) {
+  // 正常情况下, 列表中的元素就是函数, 我们只不过是在确认这个事实
+  // 当然, 你也可以基于 raw slice 的 kind, 实现一个通用的处理函数
+  assert(program.funcs.kind == KOOPA_RSIK_FUNCTION);
+  // 获取当前函数
+  koopa_raw_function_t func = (koopa_raw_function_t) program.funcs.buffer[i];
+
+  // 进一步处理当前函数
+  cout<<func->name<<endl;
+  for(int i = 1; i < strlen(func->name);i++)
+  {
+    char c = func->name[i]; 
+    cout<<c;
+    fprintf(yyout, "%c",c);
+  }
+  // fprintf(yyout, "%s",func->name);
+  fprintf(yyout, "\n");
+}
+  // ...
+  // cout<<"  .text "<<endl;
+  // cout<<"  .global main"<<endl;
+  // cout<<"main:"<<endl;
+  // cout<<"  li a0, 0"<<endl;
+  // cout<<"  ret   "<<endl;
   // 访问所有全局变量
   Visit(program.values);
   // 访问所有函数
@@ -70,7 +106,15 @@ void Visit(const koopa_raw_slice_t &slice) {
 void Visit(const koopa_raw_function_t &func) {
   // 执行一些其他的必要操作
   // ...
-  // cout<<func->name<<":"<<endl;
+  for(int i = 1; i < strlen(func->name);i++)
+  {
+    char c = func->name[i]; 
+    cout<<c;
+    fprintf(yyout, "%c",c);
+  }
+  cout<<":"<<endl;
+  fprintf(yyout, ":");
+  fprintf(yyout, "\n");
   // 访问所有基本块
   Visit(func->bbs);
 }
@@ -107,12 +151,21 @@ void Visit(const koopa_raw_value_t &value) {
 // ...
 
 void Visit(const koopa_raw_return_t &ret) {
-  // cout<<"ret"<<endl;
+
+  cout<<"li a0, ";
+  cout<<ret.value->kind.data.integer.value<<endl;
+  cout<<"ret"<<endl;
+
+  fprintf(yyout,"li a0, ");
+  fprintf(yyout, "%d",ret.value->kind.data.integer.value);
+  fprintf(yyout, "\n");
+  fprintf(yyout, "ret");
+  fprintf(yyout, "\n");
 }
 
 
 void Visit(const koopa_raw_integer_t &integer) {
-  // cout<<integer.value<<endl;
+  cout<<integer.value<<endl;
 }
 
 
@@ -126,6 +179,7 @@ int main(int argc, const char *argv[]) {
   auto input = argv[2];
   auto output = argv[4];
 
+  cout<<"mode"<<mode<<endl;
   // 打开输入文件, 并且指定 lexer 在解析的时候读取这个文件
   yyin = fopen(input, "r");
   assert(yyin);
@@ -141,6 +195,8 @@ int main(int argc, const char *argv[]) {
   string str0 = "";
   // dump AST
   // if(mode == )
+  
+ 
   ast->Dump(str0);
   cout << endl;
 
@@ -148,6 +204,25 @@ int main(int argc, const char *argv[]) {
   cout<< str0 <<endl;
   const char* str = str0.c_str();
 
+  cout<<"mode"<<endl;
+  cout<<mode<<endl;
+  cout<<str<<endl;
+  if(strcmp(mode,"-koopa") == 0)
+  {
+    cout<<"yyout"<<endl;
+    for(int i=0; i <strlen(str); i++)
+    {
+      char c = str[i];
+      cout<<c;
+      if(c=='%')
+      {
+        fprintf(yyout,"%%");
+      }else{
+        fprintf(yyout,"%c", c);
+      }
+    }
+    // fprintf(yyout,"%s", str);
+  }
 
   // 解析字符串 str, 得到 Koopa IR 程序
   koopa_program_t program;
@@ -162,7 +237,13 @@ int main(int argc, const char *argv[]) {
 
   // 处理 raw program
   // ...
-  Visit(raw);
+  if(strcmp(mode,"-riscv") == 0)
+  {
+    cout<<"riscv-out"<<endl;
+    Visit(raw);
+  }
+
+  // cout<<"____________"<<endl;
   // for (size_t i = 0; i < raw.funcs.len; ++i) {
   // // 正常情况下, 列表中的元素就是函数, 我们只不过是在确认这个事实
   // // 当然, 你也可以基于 raw slice 的 kind, 实现一个通用的处理函数
@@ -176,6 +257,7 @@ int main(int argc, const char *argv[]) {
   //   assert(bb->insts.kind == KOOPA_RSIK_VALUE);
   //   koopa_raw_value_t value = (koopa_raw_value_t)bb->insts.buffer[k];
   //   assert(value->kind.tag == KOOPA_RVT_RETURN);
+  //   cout<<"return"<<endl;
   //   // 于是我们可以按照处理 return 指令的方式处理这个 value
   //   // return 指令中, value 代表返回值
   //   koopa_raw_value_t ret_value = value->kind.data.ret.value;
@@ -184,6 +266,7 @@ int main(int argc, const char *argv[]) {
   //   // 于是我们可以按照处理 integer 的方式处理 ret_value
   //   // integer 中, value 代表整数的数值
   //   int32_t int_val = ret_value->kind.data.integer.value;
+  //   cout<<int_val<<endl;
   //   // 示例程序中, 这个数值一定是 0
   //   assert(int_val == 0);
   // }
