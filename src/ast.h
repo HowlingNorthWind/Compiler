@@ -46,18 +46,18 @@ class FuncDefAST : public BaseAST {
     str0 += "fun @";
     str0 += ident;
     str0 += "(): ";
-    fprintf(yyout, "fun @");
-    fprintf(yyout, ident.c_str());
-    fprintf(yyout, "(): ");
+    // fprintf(yyout, "fun @");
+    // fprintf(yyout, ident.c_str());
+    // fprintf(yyout, "(): ");
     std::cout << "fun @";
     std::cout << ident << "(): ";
     func_type->Dump(str0);
     str0 += " { \n";
-    fprintf(yyout, " { \n");
+    // fprintf(yyout, " { \n");
     std::cout << " { "<<std::endl;
     block->Dump(str0);
     str0 += "}";
-    fprintf(yyout, "}");
+    // fprintf(yyout, "}");
     std::cout << "}";
   }
 };
@@ -71,7 +71,7 @@ class FuncTypeAST : public BaseAST {
     if(func_type_str == "int")
     {
         str0 += "i32";
-        fprintf(yyout, "i32");
+        // fprintf(yyout, "i32");
         std::cout << "i32";
     } 
   }
@@ -83,18 +83,18 @@ class BlockAST : public BaseAST {
   std::unique_ptr<BaseAST> stmt;
 
   void Dump(std::string& str0) const override {
-    str0 += "%%";
+    str0 += "%";
     str0 += "entry";
     str0 += ":\n";
-    fprintf(yyout, "%%");
-    fprintf(yyout, "entry");
-    fprintf(yyout, ":\n");
+    // fprintf(yyout, "%%");
+    // fprintf(yyout, "entry");
+    // fprintf(yyout, ":\n");
     std::cout << "%";
     std::cout << "entry";
     std::cout << ":"<<std::endl;
     stmt->Dump(str0);
     str0 += "\n";
-    fprintf(yyout, "\n");
+    // fprintf(yyout, "\n");
     std::cout << std::endl;
   }
 };
@@ -107,8 +107,8 @@ class StmtAST : public BaseAST {
   void Dump(std::string& str0) const override {
     str0 += " ret ";
     str0 += std::to_string(number).c_str();
-    fprintf(yyout, "  ret ");
-    fprintf(yyout, std::to_string(number).c_str());
+    // fprintf(yyout, "  ret ");
+    // fprintf(yyout, std::to_string(number).c_str());
     std::cout <<"  "<< "ret ";
     std::cout << number;
   }
