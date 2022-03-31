@@ -140,7 +140,7 @@ int main(int argc, const char *argv[]) {
 
   string str0 = "";
   // dump AST
-  if(mode == )
+  // if(mode == )
   ast->Dump(str0);
   cout << endl;
 
