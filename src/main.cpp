@@ -16,7 +16,7 @@ using namespace std;
 extern FILE *yyin;
 extern FILE *yyout;
 extern int yyparse(unique_ptr<BaseAST> &ast);
-
+int tmpcnt = 0;
 // 函数声明略
 // ...
 void Visit(const koopa_raw_program_t &program);
@@ -26,7 +26,7 @@ void Visit(const koopa_raw_basic_block_t &bb);
 void Visit(const koopa_raw_value_t &value);
 void Visit(const koopa_raw_return_t &ret);
 void Visit(const koopa_raw_integer_t &integer);
-
+void Visit(const koopa_raw_binary_t &binary);
 // 访问 raw program
 void Visit(const koopa_raw_program_t &program) {
   // 执行一些其他的必要操作
@@ -140,6 +140,11 @@ void Visit(const koopa_raw_value_t &value) {
       // 访问 integer 指令
       Visit(kind.data.integer);
       break;
+    case KOOPA_RVT_BINARY:
+
+      cout<<"KOOPA_RVT_BINARY"<<endl;
+      Visit(kind.data.binary);
+    
     default:
       // 其他类型暂时遇不到
       assert(false);
@@ -161,6 +166,12 @@ void Visit(const koopa_raw_return_t &ret) {
   fprintf(yyout, "\n");
   fprintf(yyout, "ret");
   fprintf(yyout, "\n");
+}
+
+
+void Visit(const koopa_raw_binary_t &binary) {
+  cout<<binary.op<<endl;
+  cout<<binary.lhs->kind.tag<<endl;
 }
 
 
