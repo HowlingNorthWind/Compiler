@@ -17,6 +17,7 @@ extern FILE *yyin;
 extern FILE *yyout;
 extern int yyparse(unique_ptr<BaseAST> &ast);
 int tmpcnt = 0;
+int cnt0 = 0;
 // 函数声明略
 // ...
 void Visit(const koopa_raw_program_t &program);
@@ -55,7 +56,7 @@ void Visit(const koopa_raw_program_t &program) {
   koopa_raw_function_t func = (koopa_raw_function_t) program.funcs.buffer[i];
 
   // 进一步处理当前函数
-  cout<<func->name<<endl;
+  //cout<<func->name<<endl;
   for(int i = 1; i < strlen(func->name);i++)
   {
     char c = func->name[i]; 
@@ -63,6 +64,7 @@ void Visit(const koopa_raw_program_t &program) {
     fprintf(yyout, "%c",c);
   }
   // fprintf(yyout, "%s",func->name);
+  cout<<endl;
   fprintf(yyout, "\n");
 }
   // ...
@@ -170,8 +172,31 @@ void Visit(const koopa_raw_return_t &ret) {
 
 
 void Visit(const koopa_raw_binary_t &binary) {
-  cout<<binary.op<<endl;
-  cout<<binary.lhs->kind.tag<<endl;
+  switch (binary.op) {
+    case KOOPA_RBO_EQ:
+      // 访问 return 指令
+      
+      break;
+    case KOOPA_RVT_INTEGER:
+      // 访问 integer 指令
+      
+      break;
+    case KOOPA_RVT_BINARY:
+
+     
+    default:
+      // 其他类型暂时遇不到
+      assert(false);
+  }
+  cout<<"op"<<binary.op<<endl;
+  cout<<binary.lhs->ty->tag<<endl;
+  cout<<"binary.rhs"<<endl;
+  cout<<binary.rhs->kind.data.integer.value<<endl;
+  std::string tmp1,tmp2,tmp3;
+  tmp1 = "t" + std::to_string(cnt0);
+  cnt0++;
+  cout<<tmp1<<endl;
+  
 }
 
 

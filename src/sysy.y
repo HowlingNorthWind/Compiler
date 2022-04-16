@@ -41,11 +41,12 @@ int cnt = 0;
 %token INT RETURN
 %token <str_val> IDENT
 %token <int_val> INT_CONST
-%token <ast_val> '=' '>' '<' '+' '-' '*' '/' '%' '!'
-
+%token <ast_val> '+' '-' '*' '/' '%' '!'
+%token <ast_val> LE GE EQ NE AND OR LT GT
 
 // 非终结符的类型定义
 %type <ast_val> FuncDef FuncType Block Stmt Exp PrimaryExp Number UnaryExp UnaryOp MulExp AddExp
+%type <ast_val> RelExp EqExp LAndExp LOrExp
 
 
 %%
@@ -110,7 +111,7 @@ Stmt
   ;
 
 Exp
-  : AddExp {
+  : LOrExp {
     auto ast = new ExpAST();
     ast->son.push_back($1);
     $$ = ast;
@@ -223,6 +224,77 @@ AddExp
   }
   ;
 
+RelExp
+  : AddExp{
+    auto ast = new RelExp();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | RelExp LT AddExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1; 
+
+  }
+  | RelExp GT AddExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  | RelExp LE AddExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  | RelExp GE AddExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  ;
+
+EqExp
+  : RelExp{
+    auto ast = new EqExp();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | EqExp EQ RelExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  | EqExp NE RelExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  ;
+
+LAndExp 
+  : EqExp{
+    auto ast = new LAndExp();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | LAndExp AND EqExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  ;
+
+LOrExp
+  : LAndExp{
+    auto ast = new LOrExp();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | LOrExp OR LAndExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
 
 
 %%

@@ -18,11 +18,12 @@ using namespace std;
 /* 空白符和注释 */
 WhiteSpace    [ \t\n\r]*
 LineComment   "//".*$
-BlockComment  \/\*(\s|.)*?\*\/
+
+%x COMMENTS
 
 /* 标识符 */
 Identifier    [a-zA-Z_][a-zA-Z0-9_]*
-Operator "="|">"|"<"|"+"|"-"|"*"|"/"|"%"|"!"
+Operator      "+"|"-"|"*"|"/"|"%"|"!"
 
 
 /* 整数字面量 */
@@ -32,9 +33,15 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 
 %%
 
+
+"/*"    {BEGIN COMMENTS;}
+<COMMENTS>.
+<COMMENTS>\n
+<COMMENTS>"*/"  {BEGIN INITIAL;}
+
 {WhiteSpace}    { /* 忽略, 不做任何操作 */ }
 {LineComment}   { /* 忽略, 不做任何操作 */ }
-{BlockComment}  { /* 忽略, 不做任何操作 */ }
+
 
 "int"           { return INT; }
 "return"        { return RETURN; }
@@ -46,6 +53,14 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 {Hexadecimal}   { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
 {Operator}      { auto ast = new Op(_OP, yytext[0]); yylval.ast_val = ast; return yytext[0]; }
 
+"<="            { auto ast = new class LE(); yylval.ast_val = ast; return LE;}
+">="            { auto ast = new class GE(); yylval.ast_val = ast; return GE;}
+"=="            { auto ast = new class EQ(); yylval.ast_val = ast; return EQ;}
+"!="            { auto ast = new class NE(); yylval.ast_val = ast; return NE;}
+"&&"            { auto ast = new class AND(); yylval.ast_val = ast; return AND;}
+"||"            { auto ast = new class OR(); yylval.ast_val = ast; return OR;}
+"<"             { auto ast = new class LT(); yylval.ast_val = ast; return LT;}
+">"             { auto ast = new class GT(); yylval.ast_val = ast; return GT;}
 
 .               { return yytext[0]; }
 
