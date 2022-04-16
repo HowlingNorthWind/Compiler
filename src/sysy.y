@@ -45,9 +45,8 @@ int cnt = 0;
 
 
 // 非终结符的类型定义
-%type <ast_val> FuncDef FuncType Block Stmt Exp PrimaryExp Number UnaryExp UnaryOp
+%type <ast_val> FuncDef FuncType Block Stmt Exp PrimaryExp Number UnaryExp UnaryOp MulExp AddExp
 
-// %type <int_val> Number
 
 %%
 
@@ -111,9 +110,8 @@ Stmt
   ;
 
 Exp
-  : UnaryExp {
+  : AddExp {
     auto ast = new ExpAST();
-    ast->unaryexp = unique_ptr<BaseAST>($1);
     ast->son.push_back($1);
     $$ = ast;
   }
@@ -182,6 +180,50 @@ UnaryOp
     $$ = ast;
   }
   ;
+
+MulExp 
+  : UnaryExp{
+    auto ast = new MulExp();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | MulExp '*' UnaryExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  | MulExp '/' UnaryExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  | MulExp '%' UnaryExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  ;
+
+AddExp
+  : MulExp{
+    auto ast = new AddExp();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | AddExp '+' MulExp{
+    // cout<<$1<<endl;
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  | AddExp '-' MulExp{
+    $1->son.push_back($2);
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  ;
+
+
 
 %%
 

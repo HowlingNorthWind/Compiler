@@ -7,7 +7,7 @@ extern FILE *yyout;
 extern int tmpcnt;
 
 enum TYPE{
-  _UnaryExp, _PrimaryExp, _UnaryOp, _Number, _Exp, _OP, 
+  _UnaryExp, _PrimaryExp, _UnaryOp, _Number, _Exp, _OP, _AddExp, _MulExp, 
 };
 
 class BaseAST {
@@ -151,7 +151,6 @@ class ExpAST : public BaseAST {
   {
     type = _Exp;
   }
-  std::unique_ptr<BaseAST> unaryexp;
   char op;
   int val;
   
@@ -161,7 +160,7 @@ class ExpAST : public BaseAST {
   std::string retvaltmp(std::string& str0) override
   {
     std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"<<std::endl;
-    std::string tmp = unaryexp->retvaltmp(str0);
+    std::string tmp = son[0]->retvaltmp(str0);
     return tmp;
   }
 };
@@ -300,4 +299,150 @@ class Op : public BaseAST {
   void Dump(std::string& str0) const override {
    
   }
+};
+
+class AddExp : public BaseAST {
+  public:
+
+  AddExp()
+  {
+    type = _AddExp;
+  }
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override {
+    if(son.size() == 1)
+    {
+      return son[0]->retvaltmp(str0);
+    }
+    std::string tmp1, tmp2, tmp3;
+    tmp1 = "%" + std::to_string(tmpcnt);
+    tmpcnt++;
+    for(int i = 1; i < son.size(); i += 2)
+    {
+      if(i == 1)
+      {
+        tmp2 = son[0]->retvaltmp(str0);
+        tmp3 = son[i+1]->retvaltmp(str0);
+
+        str0 += " ";
+        str0 += tmp1.c_str();
+        str0 += " = ";
+        if(son[i]->op == '+')
+        {
+          str0 += "add";
+        }else if(son[i]->op == '-')
+        {
+          str0 += "sub";
+        }
+        str0 += ' ';
+        str0 += tmp2.c_str();
+        str0 += ", ";
+        str0 += tmp3.c_str();
+        str0 += "\n";
+        std::cout<<str0<<std::endl;
+      }else
+      {
+        tmp2 = tmp1;
+        tmp3 = son[i+1]->retvaltmp(str0);
+
+        str0 += " ";
+        str0 += tmp1.c_str();
+        str0 += " = ";
+        if(son[i]->op == '+')
+        {
+          str0 += "add";
+        }else if(son[i]->op == '-')
+        {
+          str0 += "sub";
+        }
+        str0 += " ";
+        str0 += tmp2.c_str();
+        str0 += ", ";
+        str0 += tmp3.c_str();
+        str0 += "\n";
+        std::cout<<str0<<std::endl;
+      }  
+    }
+    return tmp1;
+  }
+  
+};
+
+class MulExp : public BaseAST {
+  public:
+
+  MulExp()
+  {
+    type = _MulExp;
+  }
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    if(son.size() == 1)
+    {
+      return son[0]->retvaltmp(str0);
+    }
+    std::string tmp1,tmp2,tmp3;
+    tmp1 = "%" + std::to_string(tmpcnt);
+    tmpcnt++;
+    for(int i = 1; i < son.size(); i += 2)
+    {
+     
+      if(i == 1)
+      {
+        tmp2 = son[0]->retvaltmp(str0);
+        tmp3 = son[i+1]->retvaltmp(str0);
+
+        str0 += " ";
+        str0 += tmp1.c_str();
+        str0 += " = ";
+        if(son[i]->op == '*')
+        {
+          str0 += "mul";
+        }else if(son[i]->op == '/')
+        {
+          str0 += "div";
+        }else if(son[i]->op == '%')
+        {
+          str0 += "mod";
+        }
+        str0 += ' ';
+        str0 += tmp2.c_str();
+        str0 += ", ";
+        str0 += tmp3.c_str();
+        str0 += "\n";
+        std::cout<<str0<<std::endl;
+      }else
+      {
+        tmp2 = tmp1;
+        tmp3 = son[i+1]->retvaltmp(str0);
+
+        str0 += " ";
+        str0 += tmp1.c_str();
+        str0 += " = ";
+        if(son[i]->op == '*')
+        {
+          str0 += "mul";
+        }else if(son[i]->op == '/')
+        {
+          str0 += "div";
+        }else if(son[i]->op == '%')
+        {
+          str0 += "mod";
+        }
+        str0 += " ";
+        str0 += tmp2.c_str();
+        str0 += ", ";
+        str0 += tmp3.c_str();
+        str0 += "\n";
+        std::cout<<str0<<std::endl;
+      } 
+      
+    }
+    return tmp1;
+  }
+
 };
