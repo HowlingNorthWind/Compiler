@@ -152,8 +152,8 @@ class ExpAST : public BaseAST {
   {
     type = _Exp;
   }
-  char op;
-  int val;
+
+
   
   void Dump(std::string& str0) const override {
   }
@@ -171,8 +171,8 @@ class PrimaryExp : public BaseAST {
  public:
   std::unique_ptr<BaseAST> exp;
   std::unique_ptr<BaseAST> number;
-  int val;
-  char op = '+';
+
+ 
   PrimaryExp()
   {
     type = _PrimaryExp;
@@ -200,8 +200,7 @@ class UnaryExp : public BaseAST {
   std::unique_ptr<BaseAST> primaryexp;
   std::unique_ptr<BaseAST> unaryop;
   std::unique_ptr<BaseAST> unaryexp;
-  int val;
-  char op;
+
   int cnt1;
   int cnt2;
   
@@ -724,57 +723,73 @@ class LAndExp : public BaseAST {
   void Dump(std::string& str0) const override {
    
   }
-   std::string retvaltmp(std::string& str0) override  {
+  std::string retvaltmp(std::string& str0) override  {
+    // if(son.size() == 1)
+    // {
+    //   return son[0]->retvaltmp(str0);
+    // }
+    // std::string tmp1,tmp2,tmp3;
+    // tmp1 = "%" + std::to_string(tmpcnt);
+    // tmpcnt++;
+    // for(int i = 1; i < son.size(); i += 2)
+    // {
+     
+    //   if(i == 1)
+    //   {
+    //     tmp2 = son[0]->retvaltmp(str0);
+    //     tmp3 = son[i+1]->retvaltmp(str0);
+
+    //     str0 += " ";
+    //     str0 += tmp1.c_str();
+    //     str0 += " = ";
+    //     if(son[i]->type == _AND)
+    //     {
+    //       str0 += "and";
+    //     }
+    //     str0 += ' ';
+    //     str0 += tmp2.c_str();
+    //     str0 += ", ";
+    //     str0 += tmp3.c_str();
+    //     str0 += "\n";
+    //     std::cout<<str0<<std::endl;
+    //   }else
+    //   {
+    //     tmp2 = tmp1;
+    //     tmp3 = son[i+1]->retvaltmp(str0);
+
+    //     str0 += " ";
+    //     str0 += tmp1.c_str();
+    //     str0 += " = ";
+    //     if(son[i]->type == _AND)
+    //     {
+    //       str0 += "and";
+    //     }
+    //     str0 += " ";
+    //     str0 += tmp2.c_str();
+    //     str0 += ", ";
+    //     str0 += tmp3.c_str();
+    //     str0 += "\n";
+    //     std::cout<<str0<<std::endl;
+    //   } 
+      
+    // }
+    // return tmp1;
     if(son.size() == 1)
     {
       return son[0]->retvaltmp(str0);
     }
-    std::string tmp1,tmp2,tmp3;
-    tmp1 = "%" + std::to_string(tmpcnt);
-    tmpcnt++;
-    for(int i = 1; i < son.size(); i += 2)
+    std::string tmp1, tmp2, tmp3;
+    for(int i = 0; i < son.size(); i += 2)
     {
-     
-      if(i == 1)
+      son[i]->retvaltmp(str0);
+      std::cout<<"son[i].val"<<std::endl;
+      std::cout<<son[i]->val<<std::endl;
+      if(son[i]->val == 0)
       {
-        tmp2 = son[0]->retvaltmp(str0);
-        tmp3 = son[i+1]->retvaltmp(str0);
-
-        str0 += " ";
-        str0 += tmp1.c_str();
-        str0 += " = ";
-        if(son[i]->type == _AND)
-        {
-          str0 += "and";
-        }
-        str0 += ' ';
-        str0 += tmp2.c_str();
-        str0 += ", ";
-        str0 += tmp3.c_str();
-        str0 += "\n";
-        std::cout<<str0<<std::endl;
-      }else
-      {
-        tmp2 = tmp1;
-        tmp3 = son[i+1]->retvaltmp(str0);
-
-        str0 += " ";
-        str0 += tmp1.c_str();
-        str0 += " = ";
-        if(son[i]->type == _AND)
-        {
-          str0 += "and";
-        }
-        str0 += " ";
-        str0 += tmp2.c_str();
-        str0 += ", ";
-        str0 += tmp3.c_str();
-        str0 += "\n";
-        std::cout<<str0<<std::endl;
-      } 
-      
+        return "0";
+      }
     }
-    return tmp1;
+    return "1";
   }
 };
 
@@ -790,55 +805,69 @@ class LOrExp : public BaseAST {
    
   }
   std::string retvaltmp(std::string& str0) override  {
+    // if(son.size() == 1)
+    // {
+    //   return son[0]->retvaltmp(str0);
+    // }
+    // std::string tmp1,tmp2,tmp3;
+    // tmp1 = "%" + std::to_string(tmpcnt);
+    // tmpcnt++;
+    // for(int i = 1; i < son.size(); i += 2)
+    // {
+     
+    //   if(i == 1)
+    //   {
+    //     tmp2 = son[0]->retvaltmp(str0);
+    //     tmp3 = son[i+1]->retvaltmp(str0);
+
+    //     str0 += " ";
+    //     str0 += tmp1.c_str();
+    //     str0 += " = ";
+    //     if(son[i]->type == _OR)
+    //     {
+    //       str0 += "or";
+    //     }
+    //     str0 += ' ';
+    //     str0 += tmp2.c_str();
+    //     str0 += ", ";
+    //     str0 += tmp3.c_str();
+    //     str0 += "\n";
+    //     std::cout<<str0<<std::endl;
+    //   }else
+    //   {
+    //     tmp2 = tmp1;
+    //     tmp3 = son[i+1]->retvaltmp(str0);
+
+    //     str0 += " ";
+    //     str0 += tmp1.c_str();
+    //     str0 += " = ";
+    //     if(son[i]->type == _OR)
+    //     {
+    //       str0 += "or";
+    //     }
+    //     str0 += " ";
+    //     str0 += tmp2.c_str();
+    //     str0 += ", ";
+    //     str0 += tmp3.c_str();
+    //     str0 += "\n";
+    //     std::cout<<str0<<std::endl;
+    //   } 
+      
+    // }
+    // return tmp1;
     if(son.size() == 1)
     {
       return son[0]->retvaltmp(str0);
     }
-    std::string tmp1,tmp2,tmp3;
-    tmp1 = "%" + std::to_string(tmpcnt);
-    tmpcnt++;
-    for(int i = 1; i < son.size(); i += 2)
+    std::string tmp1, tmp2, tmp3;
+    for(int i = 0; i < son.size(); i += 2)
     {
-     
-      if(i == 1)
+      son[i]->retvaltmp(str0);
+      if(son[i]->val >= 1)
       {
-        tmp2 = son[0]->retvaltmp(str0);
-        tmp3 = son[i+1]->retvaltmp(str0);
-
-        str0 += " ";
-        str0 += tmp1.c_str();
-        str0 += " = ";
-        if(son[i]->type == _OR)
-        {
-          str0 += "or";
-        }
-        str0 += ' ';
-        str0 += tmp2.c_str();
-        str0 += ", ";
-        str0 += tmp3.c_str();
-        str0 += "\n";
-        std::cout<<str0<<std::endl;
-      }else
-      {
-        tmp2 = tmp1;
-        tmp3 = son[i+1]->retvaltmp(str0);
-
-        str0 += " ";
-        str0 += tmp1.c_str();
-        str0 += " = ";
-        if(son[i]->type == _OR)
-        {
-          str0 += "or";
-        }
-        str0 += " ";
-        str0 += tmp2.c_str();
-        str0 += ", ";
-        str0 += tmp3.c_str();
-        str0 += "\n";
-        std::cout<<str0<<std::endl;
-      } 
-      
+        return "1";
+      }
     }
-    return tmp1;
+    return "0";
   }
 };

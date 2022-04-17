@@ -113,6 +113,7 @@ Stmt
 Exp
   : LOrExp {
     auto ast = new ExpAST();
+    ast->val = $1->val;
     ast->son.push_back($1);
     $$ = ast;
   }
@@ -122,12 +123,16 @@ PrimaryExp
   : '(' Exp ')' {
     auto ast = new PrimaryExp();
     ast->exp = unique_ptr<BaseAST>($2);
+    ast->val = $2->val;
     ast->son.push_back($2);
     $$ = ast;
   }
   | Number {
     auto ast = new PrimaryExp();
     ast->number = unique_ptr<BaseAST>($1);
+    ast->val = $1->val;
+    cout<<"PrimaryExp"<<endl;
+    cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
@@ -138,6 +143,8 @@ Number
   : INT_CONST {
     auto ast = new Number();
     ast->val = $1;
+    cout<<"INT_CONST"<<endl;
+    cout<<ast->val<<endl;
     ast->isint = true;
     $$ = ast;
   }
@@ -146,8 +153,9 @@ Number
 UnaryExp 
   : PrimaryExp{
     auto ast = new UnaryExp();
-    ast->primaryexp = unique_ptr<BaseAST>($1);
     ast->val = $1->val;
+    cout<<"UnaryExp"<<endl;
+    cout<<ast->val<<endl;
     ast->isint = $1->isint;
     ast->son.push_back($1);
     $$ = ast;
@@ -158,6 +166,17 @@ UnaryExp
     ast->unaryexp = unique_ptr<BaseAST>($2);
     ast->son.push_back($1);
     ast->son.push_back($2);
+    if($1->son[0]->op == '-'){
+      ast->val = 0 - ($2->val);
+    } else if($1->son[0]->op == '!'){
+      if($2->val != 0){
+        ast->val = 0;
+      }else{
+        ast->val = 1;
+      }
+    } else{
+      ast->val = $2->val;
+    }
     $$ = ast;
   }
   ;
@@ -185,20 +204,30 @@ UnaryOp
 MulExp 
   : UnaryExp{
     auto ast = new MulExp();
+    ast->val = $1->val;
+    cout<<"MULExp"<<endl;
+    cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
   | MulExp '*' UnaryExp{
+    $1->val = $1->val * $3->val;
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
   }
   | MulExp '/' UnaryExp{
+    if($3->val != 0){
+      $1->val = $1->val / $3->val;
+    }
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
   }
   | MulExp '%' UnaryExp{
+    if($3->val != 0){
+      $1->val = $1->val % $3->val;
+    }
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
@@ -208,16 +237,21 @@ MulExp
 AddExp
   : MulExp{
     auto ast = new AddExp();
+    ast->val = $1->val;
+    cout<<"AddExp"<<endl;
+    cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
   | AddExp '+' MulExp{
     // cout<<$1<<endl;
+    $1->val = $1->val + $3->val;
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
   }
   | AddExp '-' MulExp{
+    $1->val = $1->val - $3->val;
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
@@ -227,26 +261,49 @@ AddExp
 RelExp
   : AddExp{
     auto ast = new RelExp();
+    ast->val = $1->val;
+    cout<<"ReLExp"<<endl;
+    cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
   | RelExp LT AddExp{
+    if($1->val < $3->val){
+      $1->val = 1;
+    }else{
+      $1->val = 0;
+    }
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1; 
 
   }
   | RelExp GT AddExp{
+    if($1->val > $3->val){
+      $1->val = 1;
+    }else{
+      $1->val = 0;
+    }
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
   }
   | RelExp LE AddExp{
+    if($1->val <= $3->val){
+      $1->val = 1;
+    }else{
+      $1->val = 0;
+    }
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
   }
   | RelExp GE AddExp{
+    if($1->val >= $3->val){
+      $1->val = 1;
+    }else{
+      $1->val = 0;
+    }
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
@@ -256,15 +313,28 @@ RelExp
 EqExp
   : RelExp{
     auto ast = new EqExp();
+    ast->val = $1->val;
+    cout<<"EqExp"<<endl;
+    cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
   | EqExp EQ RelExp{
+    if($1->val == $3->val){
+      $1->val = 1;
+    }else{
+      $1->val = 0;
+    }
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
   }
   | EqExp NE RelExp{
+    if($1->val != $3->val){
+      $1->val = 1;
+    }else{
+      $1->val = 0;
+    }
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
@@ -274,10 +344,18 @@ EqExp
 LAndExp 
   : EqExp{
     auto ast = new LAndExp();
+    ast->val = $1->val;
+    cout<<"LAndExp"<<endl;
+    cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
   | LAndExp AND EqExp{
+    if($1->val && $3->val){
+      $1->val = 1;
+    }else{
+      $1->val = 0;
+    }
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
@@ -287,10 +365,18 @@ LAndExp
 LOrExp
   : LAndExp{
     auto ast = new LOrExp();
+    ast->val = $1->val;
+    cout<<"LOrExp"<<endl;
+    cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
   | LOrExp OR LAndExp{
+    if($1->val || $3->val){
+      $1->val = 1;
+    }else{
+      $1->val = 0;
+    }
     $1->son.push_back($2);
     $1->son.push_back($3);
     $$ = $1;
