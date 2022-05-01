@@ -2,13 +2,20 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
+#include <variant>
+
 extern FILE *yyout;
 // 所有 AST 的基类
 extern int tmpcnt;
+extern std::map<std::string, std::variant<int, std::string>> sym_table;
 
 enum TYPE{
   _UnaryExp, _PrimaryExp, _UnaryOp, _Number, _Exp, _OP, _AddExp, _MulExp, _RelExp, 
-  _EqExp, _LAndExp, _LOrExp, _LE, _GE, _EQ, _NE, _AND, _OR, _LT, _GT, 
+  _EqExp, _LAndExp, _LOrExp, _LE, _GE, _EQ, _NE, _AND, _OR, _LT, _GT, _Decl, 
+  _ConstDecl, _ConstDef_dup, _BType, _ConstDef, _BlockItem_dup, _BlockItem,
+  _LVal, _ConstExp, _ConstInitVal, _Stmt, _VarDecl, _VarDef_dup, _VarDef, 
+  _InitVal, 
 };
 
 class BaseAST {
@@ -115,7 +122,11 @@ class BlockAST : public BaseAST {
     std::cout << "%";
     std::cout << "entry";
     std::cout << ":"<<std::endl;
-    stmt->Dump(str0);
+    // stmt->Dump(str0);
+    // son[0]->retvaltmp(str0);
+    for(int i = 0; i < son.size(); i++){
+      son[i]->retvaltmp(str0);
+    }
     str0 += "\n";
     // fprintf(yyout, "\n");
     std::cout << std::endl;
@@ -126,21 +137,36 @@ class BlockAST : public BaseAST {
 class StmtAST : public BaseAST {
  public:
   std::unique_ptr<BaseAST> exp;
+  StmtAST(){
+    type = _Stmt;
+  }
 
   void Dump(std::string& str0) const override {
-    
-    std::string tmp = exp->retvaltmp(str0);
-    // str0 += std::to_string(number).c_str();
-    // fprintf(yyout, "  ret ");
-    // fprintf(yyout, std::to_string(number).c_str());
-    std::cout<<tmp<<std::endl;
-    std::cout<<"asdfghjkasdfghjkasdfghj"<<std::endl;
-    str0 += " ret ";
-    std::cout<<str0<<std::endl;
-    str0 += tmp.c_str();
-    std::cout<<str0<<std::endl;
-    // std::cout <<"  "<< "ret ";
-    // std::cout << number;
+    std::cout<<"Stmt"<<std::endl;
+    if(son[0]->type == _Exp){
+      std::cout<<"STMT1"<<std::endl;
+      std::string tmp = exp->retvaltmp(str0);
+      // str0 += std::to_string(number).c_str();
+      // fprintf(yyout, "  ret ");
+      // fprintf(yyout, std::to_string(number).c_str());
+      std::cout<<tmp<<std::endl;
+      std::cout<<"asdfghjkasdfghjkasdfghj"<<std::endl;
+      str0 += " ret ";
+      std::cout<<str0<<std::endl;
+      str0 += tmp.c_str();
+      std::cout<<str0<<std::endl;
+      // std::cout <<"  "<< "ret ";
+      // std::cout << number;
+    }else if(son[0]->type == _LVal){
+      std::cout<<"STMT2"<<std::endl;
+      std::string tmpexp, tmpident;
+      tmpexp = son[2]->retvaltmp(str0);
+      tmpident = '@'+son[0]->retvaltmp(str0);
+      str0 += " store " + tmpexp + ", " + tmpident+'\n';
+      str0 += '\n';
+      std::cout<<str0<<std::endl;
+    }
+   
   }
 };
 
@@ -161,6 +187,7 @@ class ExpAST : public BaseAST {
   std::string retvaltmp(std::string& str0) override
   {
     std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"<<std::endl;
+    std::cout<<"Exp"<<std::endl;
     std::string tmp = son[0]->retvaltmp(str0);
     return tmp;
   }
@@ -214,6 +241,7 @@ class UnaryExp : public BaseAST {
 
 
   std::string retvaltmp(std::string& str0) override {
+    std::cout<<"UnaryExp"<<std::endl;
     std::cout<<"11111111"<<std::endl;
     std::string tmp1;
     std::string tmp2;
@@ -228,8 +256,27 @@ class UnaryExp : public BaseAST {
       }else if(ptr->son[0]->type == _Exp)
       {
         std::cout<<"ab11111111"<<std::endl;
-        
         tmp1 = ptr->son[0]->retvaltmp(str0);
+      }else if(ptr->son[0]->type == _LVal)
+      {
+        tmp1 = ptr->son[0]->retvaltmp(str0);
+        std::variant<int, std::string> variant_tmp = sym_table.at(tmp1);
+        std::cout<<variant_tmp.index()<<std::endl;
+        if(variant_tmp.index() == 1){
+          
+          std::string tmptmp;
+          tmptmp = "%" + std::to_string(tmpcnt);
+          tmpcnt++;
+          tmp1 = '@' + tmp1;
+          str0 += " "+tmptmp+" = load "+tmp1+'\n';
+          std::cout<<str0<<std::endl;
+          return tmptmp;
+        }else if(variant_tmp.index() == 0){
+          int val = std::get<int>(variant_tmp);
+          std::string tmp = std::to_string(val);
+          return tmp;
+        }
+        
       }
     }else if (son[0]->type == _UnaryOp)
     {
@@ -424,15 +471,15 @@ class AddExp : public BaseAST {
       return son[0]->retvaltmp(str0);
     }
     std::string tmp1, tmp2, tmp3;
-    tmp1 = "%" + std::to_string(tmpcnt);
-    tmpcnt++;
+    
     for(int i = 1; i < son.size(); i += 2)
     {
       if(i == 1)
       {
         tmp2 = son[0]->retvaltmp(str0);
         tmp3 = son[i+1]->retvaltmp(str0);
-
+        tmp1 = "%" + std::to_string(tmpcnt);
+        tmpcnt++;
         str0 += " ";
         str0 += tmp1.c_str();
         str0 += " = ";
@@ -453,7 +500,8 @@ class AddExp : public BaseAST {
       {
         tmp2 = tmp1;
         tmp3 = son[i+1]->retvaltmp(str0);
-
+        tmp1 = "%" + std::to_string(tmpcnt);
+        tmpcnt++;
         str0 += " ";
         str0 += tmp1.c_str();
         str0 += " = ";
@@ -493,8 +541,7 @@ class MulExp : public BaseAST {
       return son[0]->retvaltmp(str0);
     }
     std::string tmp1,tmp2,tmp3;
-    tmp1 = "%" + std::to_string(tmpcnt);
-    tmpcnt++;
+    
     for(int i = 1; i < son.size(); i += 2)
     {
      
@@ -502,7 +549,8 @@ class MulExp : public BaseAST {
       {
         tmp2 = son[0]->retvaltmp(str0);
         tmp3 = son[i+1]->retvaltmp(str0);
-
+        tmp1 = "%" + std::to_string(tmpcnt);
+        tmpcnt++;
         str0 += " ";
         str0 += tmp1.c_str();
         str0 += " = ";
@@ -526,7 +574,8 @@ class MulExp : public BaseAST {
       {
         tmp2 = tmp1;
         tmp3 = son[i+1]->retvaltmp(str0);
-
+        tmp1 = "%" + std::to_string(tmpcnt);
+        tmpcnt++;
         str0 += " ";
         str0 += tmp1.c_str();
         str0 += " = ";
@@ -724,56 +773,6 @@ class LAndExp : public BaseAST {
    
   }
   std::string retvaltmp(std::string& str0) override  {
-    // if(son.size() == 1)
-    // {
-    //   return son[0]->retvaltmp(str0);
-    // }
-    // std::string tmp1,tmp2,tmp3;
-    // tmp1 = "%" + std::to_string(tmpcnt);
-    // tmpcnt++;
-    // for(int i = 1; i < son.size(); i += 2)
-    // {
-     
-    //   if(i == 1)
-    //   {
-    //     tmp2 = son[0]->retvaltmp(str0);
-    //     tmp3 = son[i+1]->retvaltmp(str0);
-
-    //     str0 += " ";
-    //     str0 += tmp1.c_str();
-    //     str0 += " = ";
-    //     if(son[i]->type == _AND)
-    //     {
-    //       str0 += "and";
-    //     }
-    //     str0 += ' ';
-    //     str0 += tmp2.c_str();
-    //     str0 += ", ";
-    //     str0 += tmp3.c_str();
-    //     str0 += "\n";
-    //     std::cout<<str0<<std::endl;
-    //   }else
-    //   {
-    //     tmp2 = tmp1;
-    //     tmp3 = son[i+1]->retvaltmp(str0);
-
-    //     str0 += " ";
-    //     str0 += tmp1.c_str();
-    //     str0 += " = ";
-    //     if(son[i]->type == _AND)
-    //     {
-    //       str0 += "and";
-    //     }
-    //     str0 += " ";
-    //     str0 += tmp2.c_str();
-    //     str0 += ", ";
-    //     str0 += tmp3.c_str();
-    //     str0 += "\n";
-    //     std::cout<<str0<<std::endl;
-    //   } 
-      
-    // }
-    // return tmp1;
     if(son.size() == 1)
     {
       return son[0]->retvaltmp(str0);
@@ -805,56 +804,6 @@ class LOrExp : public BaseAST {
    
   }
   std::string retvaltmp(std::string& str0) override  {
-    // if(son.size() == 1)
-    // {
-    //   return son[0]->retvaltmp(str0);
-    // }
-    // std::string tmp1,tmp2,tmp3;
-    // tmp1 = "%" + std::to_string(tmpcnt);
-    // tmpcnt++;
-    // for(int i = 1; i < son.size(); i += 2)
-    // {
-     
-    //   if(i == 1)
-    //   {
-    //     tmp2 = son[0]->retvaltmp(str0);
-    //     tmp3 = son[i+1]->retvaltmp(str0);
-
-    //     str0 += " ";
-    //     str0 += tmp1.c_str();
-    //     str0 += " = ";
-    //     if(son[i]->type == _OR)
-    //     {
-    //       str0 += "or";
-    //     }
-    //     str0 += ' ';
-    //     str0 += tmp2.c_str();
-    //     str0 += ", ";
-    //     str0 += tmp3.c_str();
-    //     str0 += "\n";
-    //     std::cout<<str0<<std::endl;
-    //   }else
-    //   {
-    //     tmp2 = tmp1;
-    //     tmp3 = son[i+1]->retvaltmp(str0);
-
-    //     str0 += " ";
-    //     str0 += tmp1.c_str();
-    //     str0 += " = ";
-    //     if(son[i]->type == _OR)
-    //     {
-    //       str0 += "or";
-    //     }
-    //     str0 += " ";
-    //     str0 += tmp2.c_str();
-    //     str0 += ", ";
-    //     str0 += tmp3.c_str();
-    //     str0 += "\n";
-    //     std::cout<<str0<<std::endl;
-    //   } 
-      
-    // }
-    // return tmp1;
     if(son.size() == 1)
     {
       return son[0]->retvaltmp(str0);
@@ -871,3 +820,284 @@ class LOrExp : public BaseAST {
     return "0";
   }
 };
+
+class Decl: public BaseAST {
+  public:
+  Decl(){
+    type = _Decl;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    son[0]->retvaltmp(str0);
+    return "";
+  }
+};
+
+
+
+class ConstDecl: public BaseAST {
+  public:
+  ConstDecl(){
+    type = _ConstDecl;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    std::cout<<"ConstDecl"<<std::endl;
+    for(int i = 1; i < son.size(); i++){
+      son[i]->retvaltmp(str0);
+    }
+    return "";
+  }
+};
+
+
+class ConstDef_dup: public BaseAST {
+  public:
+  ConstDef_dup(){
+    type = _ConstDef_dup;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    std::cout<<"ConstDef_dup"<<std::endl;
+    for(int i = 0; i < son.size(); i++){
+      son[i]->retvaltmp(str0);
+    }
+    return "";
+  }
+};
+
+
+class BType: public BaseAST {
+  public:
+  std::string ident;
+  BType(){
+    type = _BType;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    return "";
+  }
+};
+
+
+class ConstDef: public BaseAST {
+  public:
+  std::string ident;
+  ConstDef(){
+    type = _ConstDef;
+  }
+  int constinitval;
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    std::cout<<"ConstDef"<<std::endl;
+    std::cout<<ident<<std::endl;
+    sym_table[ident] = constinitval;
+    return "";
+  }
+};
+
+
+class BlockItem_dup: public BaseAST {
+  public:
+  BlockItem_dup(){
+    type = _BlockItem_dup;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    std::cout<<"BlockItem_dup"<<std::endl;
+    for(int i = 0; i < son.size(); i++){
+      son[i]->retvaltmp(str0);
+    }
+    return "";
+  }
+};
+
+
+class BlockItem: public BaseAST {
+  public:
+  BlockItem(){
+    type = _BlockItem;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    std::cout<<"BlockItem"<<std::endl;
+    if(son[0]->type == _Stmt){
+      son[0]->Dump(str0);
+    }else if(son[0]->type == _Decl){
+      son[0]->retvaltmp(str0);
+    }
+    return "";
+  }
+};
+
+class LVal: public BaseAST {
+  public:
+  LVal(){
+    type = _LVal;
+  }
+  std::string ident;
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    std::cout<<"LVal"<<std::endl;
+    std::variant<int, std::string> variant_tmp = sym_table.at(ident);
+    std::cout<<variant_tmp.index()<<std::endl;
+    // val = std::get<int>(variant_tmp);
+    // std::string tmp = std::to_string(val);
+    std::string tmp = '@'+ident;
+    return ident;
+  }
+};
+
+
+class ConstExp: public BaseAST {
+  public:
+  ConstExp(){
+    type = _ConstExp;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    return "";
+  }
+};
+
+class ConstInitVal: public BaseAST {
+  public:
+  ConstInitVal(){
+    type = _ConstInitVal;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    return "";
+  }
+};
+
+
+
+
+
+class VarDecl: public BaseAST {
+  public:
+  VarDecl(){
+    type = _VarDecl;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    std::cout<<"VarDecl"<<std::endl;
+    if(son[1]->type == _VarDef_dup){
+      son[1]->retvaltmp(str0);
+    }
+    return "";
+  }
+};
+
+
+
+
+class VarDef_dup: public BaseAST {
+  public:
+  VarDef_dup(){
+    type = _VarDef_dup;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    std::cout<<"VarDef_dup"<<std::endl;
+    for(int i = 0; i < son.size(); i++){
+      son[i]->retvaltmp(str0);
+    }
+    return "";
+  }
+};
+
+
+
+
+class VarDef: public BaseAST {
+  public:
+  VarDef(){
+    type = _VarDef;
+  }
+  std::string ident;
+  int initval;
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    std::cout<<"VarDef"<<std::endl;
+    std::string tmp;
+    std::string tmp1;
+    if(son.size()>0){
+      son[0]->retvaltmp(str0);
+    }
+
+    tmp = '@' + ident;
+    str0 += " " + tmp + " = alloc i32"+"\n";
+    if(son.size() > 0){
+      tmp1 = son[0]->retvaltmp(str0);
+      str0 += " store " + tmp1 +", " + tmp+'\n';
+      str0 += "\n";
+      sym_table[ident] = tmp1;
+      std::cout<<str0<<std::endl;
+    }
+    else{
+      str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
+      str0 += "\n";
+      sym_table[ident] = "";
+      std::cout<<str0<<std::endl;
+    }
+   
+
+    return "";
+  }
+};
+
+
+
+class InitVal: public BaseAST {
+  public:
+  InitVal(){
+    type = _InitVal;
+  }
+  
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    
+    return son[0]->retvaltmp(str0);
+  }
+};
+

@@ -6,6 +6,9 @@
 #include <memory>
 #include <string>
 #include <string.h>
+#include <map>
+#include <variant>
+
 using namespace std;
 
 // 声明 lexer 的输入, 以及 parser 函数
@@ -18,6 +21,8 @@ extern FILE *yyout;
 extern int yyparse(unique_ptr<BaseAST> &ast);
 int tmpcnt = 0;
 int cnt0 = 0;
+map<string, variant<int, string>> sym_table;
+
 // 函数声明略
 // ...
 void Visit(const koopa_raw_program_t &program);

@@ -39,14 +39,16 @@ int cnt = 0;
 // lexer 返回的所有 token 种类的声明
 // 注意 IDENT 和 INT_CONST 会返回 token 的值, 分别对应 str_val 和 int_val
 %token INT RETURN
-%token <str_val> IDENT
+%token <str_val> IDENT CONST
 %token <int_val> INT_CONST
-%token <ast_val> '+' '-' '*' '/' '%' '!'
+%token <ast_val> '+' '-' '*' '/' '%' '!' '='
 %token <ast_val> LE GE EQ NE AND OR LT GT
 
 // 非终结符的类型定义
 %type <ast_val> FuncDef FuncType Block Stmt Exp PrimaryExp Number UnaryExp UnaryOp MulExp AddExp
-%type <ast_val> RelExp EqExp LAndExp LOrExp
+%type <ast_val> RelExp EqExp LAndExp LOrExp  Decl ConstDecl ConstDef_dup BType
+%type <ast_val> ConstDef BlockItem_dup BlockItem LVal ConstExp ConstInitVal
+%type <ast_val> VarDecl VarDef_dup VarDef InitVal
 
 
 %%
@@ -74,6 +76,120 @@ CompUnit
 // 否则会发生内存泄漏, 而 unique_ptr 这种智能指针可以自动帮我们 delete
 // 虽然此处你看不出用 unique_ptr 和手动 delete 的区别, 但当我们定义了 AST 之后
 // 这种写法会省下很多内存管理的负担
+
+Decl
+  : ConstDecl {
+    auto ast = new Decl();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | VarDecl {
+    auto ast = new Decl();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  ;
+
+ConstDecl
+  : CONST BType ConstDef_dup ';'{
+    auto ast = new ConstDecl();
+    
+    ast->son.push_back($2);
+    ast->son.push_back($3);
+    $$ = ast;
+  }
+  ;
+
+ConstDef_dup : ConstDef_dup ',' ConstDef {
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  | ConstDef {
+    auto ast = new ConstDef_dup();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  ;
+
+BType
+  : INT {
+    auto ast = new BType();
+    ast->ident = "int";
+    $$ = ast;
+  }
+  ;
+
+ConstDef 
+  : IDENT '=' ConstInitVal {
+    sym_table[*$1] = $3->val;
+    auto ast = new ConstDef();
+    ast->ident = *unique_ptr<string>($1);
+    ast->son.push_back($2);
+    ast->son.push_back($3);
+    ast->constinitval = $3->val;
+    $$ = ast;
+  }
+  ;
+
+ConstInitVal
+  : ConstExp {
+    auto ast = new ConstInitVal();
+    ast->val = $1->val;
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  ;
+
+VarDecl 
+  : BType VarDef_dup ';' {
+    auto ast = new VarDecl();
+    ast->son.push_back($1);
+    ast->son.push_back($2);
+    $$ = ast;
+  }
+  ;
+
+VarDef_dup
+  :  VarDef {
+    auto ast = new VarDef_dup();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | VarDef_dup ',' VarDef {
+    $1->son.push_back($3);
+    $$ = $1;
+  } 
+  ;
+
+VarDef
+  : IDENT {
+    auto ast = new VarDef();
+    ast->ident = *unique_ptr<string>($1);
+    sym_table[ast->ident] = "";
+    $$ = ast;
+  }
+  | IDENT '=' InitVal {
+    auto ast = new VarDef();
+    ast->ident = *unique_ptr<string>($1);
+    ast->initval = $3->val;
+    cout<<"VarDef"<<endl;
+    cout<<ast->val<<endl;
+    ast->son.push_back($3);
+    sym_table[ast->ident] = "";
+    $$ = ast;
+  }
+  ;
+
+InitVal
+  : Exp {
+    auto ast = new InitVal();
+    ast->son.push_back($1);
+    ast->val = $1->val;
+    $$ = ast;
+  }
+  ;
+
+
 FuncDef
   : FuncType IDENT '(' ')' Block {
     auto ast = new FuncDefAST();
@@ -95,17 +211,73 @@ FuncType
   ;
 
 Block
-  : '{' Stmt '}' {
+  : '{' BlockItem_dup '}' {
     auto ast = new BlockAST();
-    ast->stmt = unique_ptr<BaseAST>($2);
+    ast->son = $2->son;
     $$ = ast;
   }
   ;
+
+BlockItem_dup
+  : {
+    auto ast = new BlockItem_dup();
+    $$ = ast;
+  }
+  | BlockItem_dup BlockItem {
+    $1->son.push_back($2);
+    $$ = $1;
+  }
+  ;
+
+BlockItem
+  : Decl {
+    auto ast = new BlockItem();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | Stmt {
+    auto ast = new BlockItem();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  ;
+
+LVal 
+  : IDENT {
+    auto ast = new LVal();
+    ast->ident = *unique_ptr<string>($1);
+    std::variant<int, std::string> variant_tmp = sym_table.at(ast->ident);
+    std::cout<<variant_tmp.index()<<std::endl;
+    if(variant_tmp.index()==0){
+      ast->val = std::get<int>(variant_tmp);
+    }
+    // ast->val = sym_table.at(*$1);
+    $$ = ast;
+  }
+  ;
+
+ConstExp 
+  : Exp {
+    auto ast = new ConstExp();
+    ast->val = $1->val;
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  ;
+
 
 Stmt
   : RETURN Exp ';' {
     auto ast = new StmtAST();
     ast->exp = unique_ptr<BaseAST>($2);
+    ast->son.push_back($2);
+    $$ = ast;
+  }
+  | LVal '=' Exp ';' {
+    auto ast = new StmtAST();
+    ast->son.push_back($1);
+    ast->son.push_back($2);
+    ast->son.push_back($3);
     $$ = ast;
   }
   ;
@@ -115,6 +287,8 @@ Exp
     auto ast = new ExpAST();
     ast->val = $1->val;
     ast->son.push_back($1);
+    cout<<"Exp"<<endl;
+    cout<<ast->val<<endl;
     $$ = ast;
   }
   ;
@@ -125,6 +299,13 @@ PrimaryExp
     ast->exp = unique_ptr<BaseAST>($2);
     ast->val = $2->val;
     ast->son.push_back($2);
+    $$ = ast;
+  }
+  | LVal {
+    auto ast = new PrimaryExp();
+   
+    ast->val = $1->val;
+    ast->son.push_back($1);
     $$ = ast;
   }
   | Number {

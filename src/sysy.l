@@ -23,7 +23,7 @@ LineComment   "//".*$
 
 /* 标识符 */
 Identifier    [a-zA-Z_][a-zA-Z0-9_]*
-Operator      "+"|"-"|"*"|"/"|"%"|"!"
+Operator      "+"|"-"|"*"|"/"|"%"|"!"|'='
 
 
 /* 整数字面量 */
@@ -45,6 +45,7 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 
 "int"           { return INT; }
 "return"        { return RETURN; }
+"const"         { return CONST; }
 
 {Identifier}    { yylval.str_val = new string(yytext); return IDENT; }
 
