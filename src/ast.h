@@ -8,10 +8,11 @@
 extern FILE *yyout;
 // 所有 AST 的基类
 extern int tmpcnt;
+extern int symcnt;
 extern std::map<std::string, std::variant<int, std::string>> sym_table;
-extern std::map<std::string, std::variant<int, std::string>> cur_table;
-extern std::map<std::map<std::string, std::variant<int, std::string>>, \
-std::map<std::string, std::variant<int, std::string>>> total_table;
+extern std::map<std::string, std::variant<int, std::string>> *cur_table;
+extern std::map<std::map<std::string, std::variant<int, std::string>>*, \
+std::map<std::string, std::variant<int, std::string>>*> total_table;
 
 enum TYPE{
   _UnaryExp, _PrimaryExp, _UnaryOp, _Number, _Exp, _OP, _AddExp, _MulExp, _RelExp, 
@@ -51,6 +52,7 @@ class CompUnitAST : public BaseAST {
 
   void Dump(std::string& str0) const override {
     // std::cout << "CompUnitAST { ";
+    cur_table = &sym_table;
     str0 = "";
     func_def->Dump(str0);
     // std::cout << " }";
@@ -124,14 +126,30 @@ class BlockAST : public BaseAST {
   }
 
   void Dump(std::string& str0) const override {
-    total_table[cur_table] = new map<string, variant<int, string>> ;
-    
+    std::map<std::string, std::variant<int, std::string>> new_table;
+    std::map<std::string, std::variant<int, std::string>> *tmp_table = cur_table;
+    cur_table = &new_table;
+    total_table[cur_table] =  tmp_table;
+    std::map<std::string, std::variant<int, std::string>>::iterator iter;
+    std::cout<<"ITERATOR CUR"<<std::endl;
+    for(iter = (*cur_table).begin(); iter != (*cur_table).end(); ++iter){
+      std::cout<<iter->first<<std::endl;
+    }
+    std::cout<<"ITERATOR TMP"<<std::endl;
+    for(iter = (*tmp_table).begin(); iter != (*tmp_table).end(); ++iter){
+      std::cout<<iter->first<<std::endl;
+    }
+    symcnt += 1;
+    std::cout<<"SYMCNT "<<symcnt<<std::endl;
     // stmt->Dump(str0);
     // son[0]->retvaltmp(str0);
     for(int i = 0; i < son.size(); i++){
       son[i]->retvaltmp(str0);
     }
     str0 += "\n";
+
+    cur_table = tmp_table;
+    symcnt -= 1;
     // fprintf(yyout, "\n");
     std::cout << std::endl;
   }
@@ -147,6 +165,7 @@ class StmtAST : public BaseAST {
   bool ret = false;
   void Dump(std::string& str0) const override {
     std::cout<<"Stmt"<<std::endl;
+    
     if(ret == true){
       if(son.size() > 0){
       std::cout<<"STMT1"<<std::endl;
@@ -167,12 +186,33 @@ class StmtAST : public BaseAST {
         str0 += " ret ";
         std::cout<<str0<<std::endl;
       }
+    }else if(son.size() == 0){
+      return;
     }else if(son[0]->type == _LVal){
       std::cout<<"STMT2"<<std::endl;
       std::string tmpexp, tmpident;
+      std::string resident;
       tmpexp = son[2]->retvaltmp(str0);
       tmpident = '@'+son[0]->retvaltmp(str0);
-      str0 += " store " + tmpexp + ", " + tmpident+'\n';
+      int tmpsymcnt = symcnt;
+      std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
+      // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
+      while(tmpsymcnt > 0){
+        std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
+        if((*search_table).find(tmptmpident) != (*search_table).end()){
+          resident = tmptmpident;
+          std::cout<<"resident  "<<resident<<std::endl;
+          break;
+        }
+        search_table = total_table[search_table];
+        tmpsymcnt -= 1;
+      }
+      // *cur_table = tmp_table;
+      if(tmpsymcnt == 0){
+        std::cout<<"WRONG AT FIND IDENT"<<std::endl;
+      }
+
+      str0 += " store " + tmpexp + ", " + resident+'\n';
       str0 += '\n';
       std::cout<<str0<<std::endl;
     }else if(son[0]->type == _Exp){
@@ -278,7 +318,40 @@ class UnaryExp : public BaseAST {
       }else if(ptr->son[0]->type == _LVal)
       {
         tmp1 = ptr->son[0]->retvaltmp(str0);
-        std::variant<int, std::string> variant_tmp = sym_table.at(tmp1);
+
+        std::string tmpident = '@' + tmp1;
+        std::string resident;
+        int tmpsymcnt = symcnt;
+        std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
+        // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
+        std::cout<<"START FIND IDENT"<<std::endl;
+        std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
+        std::cout<<"SYMCNT "<<symcnt<<std::endl;
+        while(tmpsymcnt > 0){
+          std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
+          std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
+          std::cout<<"TMPTMPIDENT "<<tmptmpident<<std::endl;
+
+          std::map<std::string, std::variant<int, std::string>>::iterator iter;
+          std::cout<<"ITERATOR"<<std::endl;
+          for(iter = (*search_table).begin(); iter != (*search_table).end(); ++iter){
+            std::cout<<iter->first<<std::endl;
+          }
+          if((*search_table).find(tmptmpident) != (*search_table).end()){
+            resident = tmptmpident;
+            std::cout<<"resident  "<<resident<<std::endl;
+            break;
+          }
+          search_table = total_table[search_table];
+          tmpsymcnt -= 1;          
+        }
+        // *cur_table = tmp_table;
+        if(tmpsymcnt == 0){
+          std::cout<<"WRONG AT FIND IDENT"<<std::endl;
+        }
+
+
+        std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
         std::cout<<variant_tmp.index()<<std::endl;
         if(variant_tmp.index() == 1){
           
@@ -286,7 +359,7 @@ class UnaryExp : public BaseAST {
           tmptmp = "%" + std::to_string(tmpcnt);
           tmpcnt++;
           tmp1 = '@' + tmp1;
-          str0 += " "+tmptmp+" = load "+tmp1+'\n';
+          str0 += " "+tmptmp+" = load "+resident+'\n';
           std::cout<<str0<<std::endl;
           return tmptmp;
         }else if(variant_tmp.index() == 0){
@@ -923,7 +996,9 @@ class ConstDef: public BaseAST {
   std::string retvaltmp(std::string& str0) override  {
     std::cout<<"ConstDef"<<std::endl;
     std::cout<<ident<<std::endl;
-    sym_table[ident] = constinitval;
+    std::cout<<constinitval<<std::endl;
+    std::string tmpident = '@'+ident + '_' + std::to_string(symcnt);
+    (*cur_table)[tmpident] = constinitval;
     return "";
   }
 };
@@ -979,8 +1054,8 @@ class LVal: public BaseAST {
   }
   std::string retvaltmp(std::string& str0) override  {
     std::cout<<"LVal"<<std::endl;
-    std::variant<int, std::string> variant_tmp = sym_table.at(ident);
-    std::cout<<variant_tmp.index()<<std::endl;
+    // std::variant<int, std::string> variant_tmp = sym_table.at(ident);
+    // std::cout<<variant_tmp.index()<<std::endl;
     // val = std::get<int>(variant_tmp);
     // std::string tmp = std::to_string(val);
     std::string tmp = '@'+ident;
@@ -1077,23 +1152,27 @@ class VarDef: public BaseAST {
     std::cout<<"VarDef"<<std::endl;
     std::string tmp;
     std::string tmp1;
-    if(son.size()>0){
-      son[0]->retvaltmp(str0);
-    }
+    // if(son.size()>0){
+    //   son[0]->retvaltmp(str0);
+    // }
 
-    tmp = '@' + ident;
+    tmp = '@' + ident + '_' + std::to_string(symcnt);
     str0 += " " + tmp + " = alloc i32"+"\n";
+    std::cout<<"VARDEF  "<<tmp<<std::endl;
+    std::cout<<"SYMCNT  "<<symcnt<<std::endl;
     if(son.size() > 0){
       tmp1 = son[0]->retvaltmp(str0);
       str0 += " store " + tmp1 +", " + tmp+'\n';
       str0 += "\n";
-      sym_table[ident] = tmp1;
+      (*cur_table)[tmp] = tmp1;
+      std::cout<<"INITVAL VARDEF ONE"<<tmp1<<std::endl;
       std::cout<<str0<<std::endl;
     }
     else{
       str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
       str0 += "\n";
-      sym_table[ident] = "";
+      (*cur_table)[tmp] = std::to_string(initval);
+      std::cout<<"INITVAL VARDEF TWO"<<std::to_string(initval)<<std::endl;
       std::cout<<str0<<std::endl;
     }
    

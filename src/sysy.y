@@ -60,9 +60,11 @@ int cnt = 0;
 // $1 指代规则里第一个符号的返回值, 也就是 FuncDef 的返回值
 CompUnit
   : FuncDef {
+    std::cout<<"COMPUNIT START"<<std::endl;
     auto comp_unit = make_unique<CompUnitAST>();
     comp_unit->func_def = unique_ptr<BaseAST>($1);
     ast = move(comp_unit);
+    std::cout<<"COMPUNIT END"<<std::endl;
   }
   ;
 
@@ -192,6 +194,7 @@ InitVal
 
 FuncDef
   : FuncType IDENT '(' ')' Block {
+    std::cout<<"FUNCDEF"<<std::endl;
     auto ast = new FuncDefAST();
     ast->func_type = unique_ptr<BaseAST>($1);
     ast->ident = *unique_ptr<string>($2);
@@ -212,6 +215,7 @@ FuncType
 
 Block
   : '{' BlockItem_dup '}' {
+    std::cout<<"BLOCK"<<std::endl;
     auto ast = new BlockAST();
     ast->son = $2->son;
     $$ = ast;
@@ -247,6 +251,7 @@ LVal
     auto ast = new LVal();
     ast->ident = *unique_ptr<string>($1);
     std::variant<int, std::string> variant_tmp = sym_table.at(ast->ident);
+    std::cout<<"LVAL"<<std::endl;
     std::cout<<variant_tmp.index()<<std::endl;
     if(variant_tmp.index()==0){
       ast->val = std::get<int>(variant_tmp);
@@ -268,13 +273,16 @@ ConstExp
 
 Stmt
   : RETURN Exp ';' {
+    std::cout<<"STMT1"<<std::endl;
     auto ast = new StmtAST();
     ast->ret = true;
     ast->exp = unique_ptr<BaseAST>($2);
     ast->son.push_back($2);
+    std::cout<<"STMT1KKKKKKK"<<std::endl;
     $$ = ast;
   }
   | LVal '=' Exp ';' {
+    std::cout<<"STMT2"<<std::endl;
     auto ast = new StmtAST();
     ast->son.push_back($1);
     ast->son.push_back($2);
@@ -282,20 +290,24 @@ Stmt
     $$ = ast;
   }
   | Block {
+    std::cout<<"STMT3"<<std::endl;
     auto ast = new StmtAST();
     ast->son.push_back($1);
     $$ = ast;
   }
   | Exp ';' {
+    std::cout<<"STMT4"<<std::endl;
     auto ast = new StmtAST();
     ast->son.push_back($1);
     $$ = ast;
   }
   | ';' {
+    std::cout<<"STMT5"<<std::endl;
     auto ast = new StmtAST();
     $$ = ast;
   }
   | RETURN ';' {
+    std::cout<<"STMT6"<<std::endl;
     auto ast = new StmtAST();
     ast->ret = true;
     $$ = ast;
