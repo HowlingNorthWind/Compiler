@@ -22,6 +22,8 @@ extern int yyparse(unique_ptr<BaseAST> &ast);
 int tmpcnt = 0;
 int cnt0 = 0;
 map<string, variant<int, string>> sym_table;
+map<string, variant<int, string>> cur_table;
+map<map<string, variant<int, string>>,map<string, variant<int, string>>> total_table;
 
 // 函数声明略
 // ...

@@ -9,13 +9,16 @@ extern FILE *yyout;
 // 所有 AST 的基类
 extern int tmpcnt;
 extern std::map<std::string, std::variant<int, std::string>> sym_table;
+extern std::map<std::string, std::variant<int, std::string>> cur_table;
+extern std::map<std::map<std::string, std::variant<int, std::string>>, \
+std::map<std::string, std::variant<int, std::string>>> total_table;
 
 enum TYPE{
   _UnaryExp, _PrimaryExp, _UnaryOp, _Number, _Exp, _OP, _AddExp, _MulExp, _RelExp, 
   _EqExp, _LAndExp, _LOrExp, _LE, _GE, _EQ, _NE, _AND, _OR, _LT, _GT, _Decl, 
   _ConstDecl, _ConstDef_dup, _BType, _ConstDef, _BlockItem_dup, _BlockItem,
   _LVal, _ConstExp, _ConstInitVal, _Stmt, _VarDecl, _VarDef_dup, _VarDef, 
-  _InitVal, 
+  _InitVal, _Block, 
 };
 
 class BaseAST {
@@ -81,10 +84,15 @@ class FuncDefAST : public BaseAST {
     // fprintf(yyout, "(): ");
     std::cout << "fun @";
     std::cout << ident << "(): ";
+
+    
+
     func_type->Dump(str0);
     str0 += " { \n";
     // fprintf(yyout, " { \n");
     std::cout << " { "<<std::endl;
+
+    str0 += "\%entry:\n";
     block->Dump(str0);
     str0 += "}";
     // fprintf(yyout, "}");
@@ -111,17 +119,13 @@ class FuncTypeAST : public BaseAST {
 class BlockAST : public BaseAST {
  public:
   std::unique_ptr<BaseAST> stmt;
+  BlockAST(){
+    type = _Block;
+  }
 
   void Dump(std::string& str0) const override {
-    str0 += "%";
-    str0 += "entry";
-    str0 += ":\n";
-    // fprintf(yyout, "%%");
-    // fprintf(yyout, "entry");
-    // fprintf(yyout, ":\n");
-    std::cout << "%";
-    std::cout << "entry";
-    std::cout << ":"<<std::endl;
+    total_table[cur_table] = new map<string, variant<int, string>> ;
+    
     // stmt->Dump(str0);
     // son[0]->retvaltmp(str0);
     for(int i = 0; i < son.size(); i++){
@@ -140,10 +144,11 @@ class StmtAST : public BaseAST {
   StmtAST(){
     type = _Stmt;
   }
-
+  bool ret = false;
   void Dump(std::string& str0) const override {
     std::cout<<"Stmt"<<std::endl;
-    if(son[0]->type == _Exp){
+    if(ret == true){
+      if(son.size() > 0){
       std::cout<<"STMT1"<<std::endl;
       std::string tmp = exp->retvaltmp(str0);
       // str0 += std::to_string(number).c_str();
@@ -157,6 +162,11 @@ class StmtAST : public BaseAST {
       std::cout<<str0<<std::endl;
       // std::cout <<"  "<< "ret ";
       // std::cout << number;
+      }else{
+        std::cout<<"STMT RETURN NULL"<<std::endl;
+        str0 += " ret ";
+        std::cout<<str0<<std::endl;
+      }
     }else if(son[0]->type == _LVal){
       std::cout<<"STMT2"<<std::endl;
       std::string tmpexp, tmpident;
@@ -165,6 +175,14 @@ class StmtAST : public BaseAST {
       str0 += " store " + tmpexp + ", " + tmpident+'\n';
       str0 += '\n';
       std::cout<<str0<<std::endl;
+    }else if(son[0]->type == _Exp){
+      std::cout<<"STMT EXP"<<std::endl;
+      son[0]->retvaltmp(str0);
+    }else if(son[0]->type == _Block){
+      std::cout<<"STMT BLOCK"<<std::endl;
+      son[0]->Dump(str0);
+    }else{
+
     }
    
   }
