@@ -184,6 +184,7 @@ class StmtAST : public BaseAST {
       }else{
         std::cout<<"STMT RETURN NULL"<<std::endl;
         str0 += " ret ";
+        str0 += "0";
         std::cout<<str0<<std::endl;
       }
     }else if(son.size() == 0){

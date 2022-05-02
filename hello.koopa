@@ -6,6 +6,6 @@ fun @main(): i32 {
 
 
 
- ret 2
+ ret 0
 
 }
