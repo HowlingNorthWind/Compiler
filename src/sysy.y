@@ -250,13 +250,16 @@ LVal
   : IDENT {
     auto ast = new LVal();
     ast->ident = *unique_ptr<string>($1);
-    std::variant<int, std::string> variant_tmp = sym_table.at(ast->ident);
-    std::cout<<"LVAL"<<std::endl;
-    std::cout<<variant_tmp.index()<<std::endl;
-    if(variant_tmp.index()==0){
-      ast->val = std::get<int>(variant_tmp);
+    if(sym_table.find(ast->ident) != sym_table.end()){
+      std::variant<int, std::string> variant_tmp = sym_table.at(ast->ident);
+      std::cout<<"LVAL"<<std::endl;
+      std::cout<<variant_tmp.index()<<std::endl;
+      if(variant_tmp.index()==0){
+        ast->val = std::get<int>(variant_tmp);
+      }
+      // ast->val = sym_table.at(*$1);  
     }
-    // ast->val = sym_table.at(*$1);
+    
     $$ = ast;
   }
   ;
