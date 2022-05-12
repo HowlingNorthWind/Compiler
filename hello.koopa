@@ -1,67 +1,30 @@
 fun @main(): i32 { 
 %entry:
- @a_1 = alloc i32
- store 1, @a_1
-
- @b_1 = alloc i32
- store 2, @b_1
+ @i_1 = alloc i32
+ store 0, @i_1
 
  jump %while_entry0
 %while_entry0:
- %1 = load @a_1
+ %1 = load @i_1
  %0 = lt %1, 10
  br %0, %while_body0, %while_end0
 %while_body0:
- %2 = load @a_1
- %3 = add %2, 1
- store %3, @a_1
+ %3 = load @i_1
+ %2 = eq %3, 5
+ br %2, %then0, %end0
+%then0:
+ jump %while_end0
+%fl_break_continue0:
 
- jump %while_entry1
-%while_entry1:
- %5 = load @a_1
- %4 = lt %5, 5
- %7 = load @b_1
- %6 = lt %7, 10
- br 1, %while_body1, %while_end1
-%while_body1:
- %8 = load @b_1
- %9 = add %8, 1
- store %9, @b_1
+ jump %end0
+%end0:
+ %4 = load @i_1
+ %5 = add %4, 1
+ store %5, @i_1
 
-
- jump %while_entry1
-%while_end1:
- jump %while_entry2
-%while_entry2:
- %11 = load @b_1
- %10 = lt %11, 20
- br %10, %while_body2, %while_end2
-%while_body2:
- jump %while_entry3
-%while_entry3:
- %13 = load @b_1
- %12 = lt %13, 6
- br 1, %while_body3, %while_end3
-%while_body3:
- %14 = load @b_1
- %15 = add %14, 1
- store %15, @b_1
-
-
- jump %while_entry3
-%while_end3:
- %16 = load @b_1
- %17 = add %16, 2
- store %17, @b_1
-
-
- jump %while_entry2
-%while_end2:
 
  jump %while_entry0
 %while_end0:
- %18 = load @a_1
- %19 = load @b_1
- %20 = add %18, %19
- ret %20
+ %6 = load @i_1
+ ret %6
 }

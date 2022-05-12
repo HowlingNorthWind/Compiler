@@ -12,6 +12,9 @@ extern int symcnt;
 extern int ifcnt;
 extern int whilecnt;
 extern int bblockcnt;
+extern int landcnt;
+extern int lorcnt;
+extern int fl_break_continue;
 extern std::string cur_end;
 extern std::string cur_entry;
 extern std::map<std::string, std::variant<int, std::string>> sym_table;
@@ -234,6 +237,7 @@ class StmtAST : public BaseAST {
         str0 += "\%else"+std::to_string(tmp_ifcnt)+":"+'\n';
         son[2]->Dump(str0);
         str0 += " jump \%end" + std::to_string(tmp_ifcnt) + '\n';
+        
       }
 
       str0 += "\%end" + std::to_string(tmp_ifcnt) + ":" + '\n';
@@ -257,8 +261,13 @@ class StmtAST : public BaseAST {
 
       str0 += "\%while_body"+std::to_string(tmp_whilecnt)+':'+'\n';
       son[1]->Dump(str0);
-
       str0 += " jump \%while_entry"+std::to_string(tmp_whilecnt)+'\n';
+      // if(fl_break_continue != 1){
+      //     str0 += " jump \%while_entry"+std::to_string(tmp_whilecnt)+'\n';
+      //   }else if(fl_break_continue == 1){
+      //     fl_break_continue = 0;
+      //   }
+      
 
       str0 += "\%while_end"+std::to_string(tmp_whilecnt)+':'+'\n';
 
@@ -268,9 +277,13 @@ class StmtAST : public BaseAST {
 
 
     }else if(fl_break){
-      str0 += " jump "+cur_end;
+      str0 += " jump "+cur_end+'\n';
+      str0 += "\%fl_break_continue"+std::to_string(fl_break_continue)+':'+'\n';
+      fl_break_continue += 1;
     }else if(fl_continue){
-      str0 += " jump "+cur_entry;
+      str0 += " jump "+cur_entry+'\n';
+      str0 += "\%fl_break_continue"+std::to_string(fl_break_continue)+':'+'\n';
+      fl_break_continue += 1;
     }else if(son.size() == 0){
       return;
     }else if(son[0]->type == _LVal){
@@ -299,7 +312,7 @@ class StmtAST : public BaseAST {
 
       str0 += " store " + tmpexp + ", " + resident+'\n';
       str0 += '\n';
-      std::cout<<str0<<std::endl;
+      // std::cout<<str0<<std::endl;
     }else if(son[0]->type == _Exp){
       std::cout<<"STMT EXP"<<std::endl;
       son[0]->retvaltmp(str0);
@@ -453,7 +466,7 @@ class UnaryExp : public BaseAST {
           tmpcnt++;
           tmp1 = '@' + tmp1;
           str0 += " "+tmptmp+" = load "+resident+'\n';
-          std::cout<<str0<<std::endl;
+          // std::cout<<str0<<std::endl;
           // val = ptr->son[0]->val;
           return tmptmp;
         }else if(variant_tmp.index() == 0){
@@ -998,19 +1011,38 @@ class LAndExp : public BaseAST {
       return ktmp;
     }
     std::string tmp1, tmp2, tmp3;
+    int tmplandcnt= landcnt;
+    landcnt += 1;
+    str0 += "@land_res_"+std::to_string(tmplandcnt)+" = alloc i32"+'\n';
     for(int i = 0; i < son.size(); i += 2)
     {
-      son[i]->retvaltmp(str0);
+      std::string tmptmp = son[i]->retvaltmp(str0);
       std::cout<<"son[i].val"<<std::endl;
       std::cout<<son[i]->val<<std::endl;
-      if(son[i]->val == 0)
-      {
-        val = 0;
-        return "0";
-      }
+      str0 += " br "+tmptmp+", \%land_"+std::to_string(tmplandcnt);
+      str0 += +"_"+std::to_string(i)+", \%end_land_zero"+std::to_string(tmplandcnt)+'\n';
+      str0 += "\%land_"+std::to_string(tmplandcnt)+"_"+std::to_string(i)+":"+'\n';
+
+      // if(son[i]->val == 0)
+      // {
+      //   val = 0;
+      //   return "0";
+      // }
     }
-    val = 1;
-    return "1";
+    str0 += " \%land_res_1_"+std::to_string(tmplandcnt)+" = add 0, 1"+'\n';
+    str0 += " store \%land_res_1_"+std::to_string(tmplandcnt)+", @land_res_"+std::to_string(tmplandcnt)+'\n';
+    str0 += " jump \%land_end_"+std::to_string(tmplandcnt)+'\n';
+
+    str0 += "\%end_land_zero"+std::to_string(tmplandcnt)+":"+'\n';
+    str0 += " \%land_res_2_"+std::to_string(tmplandcnt)+" = add 0, 0"+'\n';
+    str0 += " store \%land_res_2_"+std::to_string(tmplandcnt)+", @land_res_"+std::to_string(tmplandcnt)+'\n';
+    str0 += " jump \%land_end_"+std::to_string(tmplandcnt)+'\n';
+    str0 += "\%land_end_"+std::to_string(tmplandcnt)+':'+'\n';
+    std::string tmpres = "@land_res_"+std::to_string(tmplandcnt);
+
+    std::string tmptmpans = "\%ans_land_"+std::to_string(tmplandcnt);
+    str0 += " "+tmptmpans+" = load"+tmpres+'\n';
+    return tmptmpans;
   }
 };
 
@@ -1034,17 +1066,42 @@ class LOrExp : public BaseAST {
       return ktmp;
     }
     std::string tmp1, tmp2, tmp3;
+    int tmplorcnt= lorcnt;
+    lorcnt += 1;
+    str0 += "@lor_res_"+std::to_string(tmplorcnt)+" = alloc i32"+'\n';
     for(int i = 0; i < son.size(); i += 2)
     {
-      son[i]->retvaltmp(str0);
-      if(son[i]->val >= 1)
-      {
-        val = 1;
-        return "1";
-      }
+
+      std::string tmptmp = son[i]->retvaltmp(str0);
+      std::cout<<"son[i].val"<<std::endl;
+      std::cout<<son[i]->val<<std::endl;
+      str0 += " br "+tmptmp+", \%end_lor_one"+std::to_string(tmplorcnt)+", \%lor_"+std::to_string(tmplorcnt);
+      str0 += +"_"+std::to_string(i)+'\n';
+      str0 += "\%lor_"+std::to_string(tmplorcnt)+"_"+std::to_string(i)+":"+'\n';
+
+      // son[i]->retvaltmp(str0);
+      // if(son[i]->val >= 1)
+      // {
+      //   val = 1;
+      //   return "1";
+      // }
     }
-    val = 0;
-    return "0";
+    str0 += " \%lor_res_1_"+std::to_string(tmplorcnt)+" = add 0, 0"+'\n';
+    str0 += " store \%lor_res_1_"+std::to_string(tmplorcnt)+", @lor_res_"+std::to_string(tmplorcnt)+'\n';
+    str0 += " jump \%lor_end_"+std::to_string(tmplorcnt)+'\n';
+
+    str0 += "\%end_lor_one"+std::to_string(tmplorcnt)+":"+'\n';
+    str0 += " \%lor_res_2_"+std::to_string(tmplorcnt)+" = add 0, 1"+'\n';
+    str0 += " store \%lor_res_2_"+std::to_string(tmplorcnt)+", @lor_res_"+std::to_string(tmplorcnt)+'\n';
+    str0 += " jump \%lor_end_"+std::to_string(tmplorcnt)+'\n';
+    str0 += "\%lor_end_"+std::to_string(tmplorcnt)+':'+'\n';
+    std::string tmpres = "@lor_res_"+std::to_string(tmplorcnt);
+
+    std::string tmptmpans = "\%ans_lor_"+std::to_string(tmplorcnt);
+    str0 += " "+tmptmpans+" = load"+tmpres+'\n';
+    return tmptmpans;
+    // val = 0;
+    // return "0";
   }
 };
 
