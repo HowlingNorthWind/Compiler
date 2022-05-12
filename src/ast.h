@@ -190,12 +190,12 @@ class StmtAST : public BaseAST {
       std::cout<<tmp<<std::endl;
       std::cout<<"asdfghjkasdfghjkasdfghj"<<std::endl;
       str0 += " ret ";
-      std::cout<<str0<<std::endl;
+      // std::cout<<str0<<std::endl;
       str0 += tmp.c_str();
       str0 += '\n';
       str0 += "\%"+std::to_string(bblockcnt)+':'+'\n';
       bblockcnt += 1;
-      std::cout<<str0<<std::endl;
+      // std::cout<<str0<<std::endl;
       // std::cout <<"  "<< "ret ";
       // std::cout << number;
       }else{
@@ -205,7 +205,7 @@ class StmtAST : public BaseAST {
         str0 += '\n';
         str0 += "\%"+std::to_string(bblockcnt)+':'+'\n';
         bblockcnt += 1;
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       }
     }else if(fl_if == true){
       std::cout<<"STMT__IF"<<std::endl;
@@ -294,6 +294,7 @@ class ExpAST : public BaseAST {
     std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"<<std::endl;
     std::cout<<"Exp"<<std::endl;
     std::string tmp = son[0]->retvaltmp(str0);
+    val = son[0]->val;
     std::cout<<"EXPAAAAAAAAAAA"<<std::endl;
     std::cout<<tmp<<std::endl;
     return tmp;
@@ -360,10 +361,12 @@ class UnaryExp : public BaseAST {
       {
         std::cout<<"aa11111111"<<std::endl;
         tmp1 = std::to_string(son[0]->son[0]->val);
+        val = son[0]->son[0]->val;
       }else if(ptr->son[0]->type == _Exp)
       {
         std::cout<<"ab11111111"<<std::endl;
         tmp1 = ptr->son[0]->retvaltmp(str0);
+        val = ptr->son[0]->val;
       }else if(ptr->son[0]->type == _LVal)
       {
         tmp1 = ptr->son[0]->retvaltmp(str0);
@@ -399,7 +402,10 @@ class UnaryExp : public BaseAST {
           std::cout<<"WRONG AT FIND IDENT"<<std::endl;
         }
 
-
+        
+        val = value_table[resident];
+        std::cout<<"RESIIIIDENT    "<<resident<<std::endl;
+        std::cout<<val<<std::endl;
         std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
         std::cout<<variant_tmp.index()<<std::endl;
         if(variant_tmp.index() == 1){
@@ -410,12 +416,12 @@ class UnaryExp : public BaseAST {
           tmp1 = '@' + tmp1;
           str0 += " "+tmptmp+" = load "+resident+'\n';
           std::cout<<str0<<std::endl;
-          val = ptr->son[0]->val;
+          // val = ptr->son[0]->val;
           return tmptmp;
         }else if(variant_tmp.index() == 0){
           int tmpval = std::get<int>(variant_tmp);
           std::string tmp = std::to_string(tmpval);
-          val = tmpval;
+          // val = tmpval;
           return tmp;
         }
         
@@ -431,7 +437,7 @@ class UnaryExp : public BaseAST {
         tmp2 = son[1]->retvaltmp(str0);
         tmp1 = "%" + std::to_string(tmpcnt);
         tmpcnt++;
-        
+        val = 0 - son[1]->val;
         str0 += " ";
         str0 += tmp1.c_str();
         str0 += " = ";
@@ -439,14 +445,14 @@ class UnaryExp : public BaseAST {
         str0 += "0, ";
         str0 += tmp2.c_str();
         str0 += "\n";
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       }else if (son[0]->son[0]->op == '!')
       {
         std::cout<<"d11111111"<<std::endl;
         tmp2 = son[1]->retvaltmp(str0);
         tmp1 = "%" + std::to_string(tmpcnt);
         tmpcnt++;
-        
+        val = !(son[1]->val);
         str0 += " ";
         str0 += tmp1.c_str();
         str0 += " = ";
@@ -454,11 +460,12 @@ class UnaryExp : public BaseAST {
         str0 += "0, ";
         str0 += tmp2.c_str();
         str0 += "\n";
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       }else if (son[0]->son[0]->op == '+')
       {
         std::cout<<"e11111111"<<std::endl;
         tmp1 = son[1]->retvaltmp(str0);
+        val = son[1]->val;
       }else
       {
         std::cout<<"wrong_op_type"<<std::endl;
@@ -610,7 +617,9 @@ class AddExp : public BaseAST {
   std::string retvaltmp(std::string& str0) override {
     if(son.size() == 1)
     {
-      return son[0]->retvaltmp(str0);
+      std::string ktmp = son[0]->retvaltmp(str0);
+      val = son[0]->val;
+      return ktmp;
     }
     std::string tmp1, tmp2, tmp3;
     
@@ -627,9 +636,11 @@ class AddExp : public BaseAST {
         str0 += " = ";
         if(son[i]->op == '+')
         {
+          val = son[0]->val + son[i+1]->val;
           str0 += "add";
         }else if(son[i]->op == '-')
         {
+          val = son[0]->val - son[i+1]->val;
           str0 += "sub";
         }
         str0 += ' ';
@@ -637,7 +648,7 @@ class AddExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       }else
       {
         tmp2 = tmp1;
@@ -649,9 +660,11 @@ class AddExp : public BaseAST {
         str0 += " = ";
         if(son[i]->op == '+')
         {
+          val = val + son[i+1]->val;
           str0 += "add";
         }else if(son[i]->op == '-')
         {
+          val = val - son[i+1]->val;
           str0 += "sub";
         }
         str0 += " ";
@@ -659,7 +672,7 @@ class AddExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       }  
     }
     return tmp1;
@@ -680,7 +693,9 @@ class MulExp : public BaseAST {
   std::string retvaltmp(std::string& str0) override  {
     if(son.size() == 1)
     {
-      return son[0]->retvaltmp(str0);
+      std::string ktmp = son[0]->retvaltmp(str0);
+      val = son[0]->val;
+      return ktmp;
     }
     std::string tmp1,tmp2,tmp3;
     
@@ -698,12 +713,15 @@ class MulExp : public BaseAST {
         str0 += " = ";
         if(son[i]->op == '*')
         {
+          val = son[0]->val * son[i+1]->val;
           str0 += "mul";
         }else if(son[i]->op == '/')
         {
+          val = son[0]->val / son[i+1]->val;
           str0 += "div";
         }else if(son[i]->op == '%')
         {
+          val = son[0]->val % son[i+1]->val;
           str0 += "mod";
         }
         str0 += ' ';
@@ -711,7 +729,7 @@ class MulExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       }else
       {
         tmp2 = tmp1;
@@ -723,12 +741,15 @@ class MulExp : public BaseAST {
         str0 += " = ";
         if(son[i]->op == '*')
         {
+          val = val * son[i+1]->val;
           str0 += "mul";
         }else if(son[i]->op == '/')
         {
+          val = val / son[i+1]->val;
           str0 += "div";
         }else if(son[i]->op == '%')
         {
+          val = val % son[i+1]->val;
           str0 += "mod";
         }
         str0 += " ";
@@ -736,7 +757,7 @@ class MulExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       } 
       
     }
@@ -761,7 +782,9 @@ class RelExp : public BaseAST {
    std::string retvaltmp(std::string& str0) override  {
     if(son.size() == 1)
     {
-      return son[0]->retvaltmp(str0);
+      std::string ktmp = son[0]->retvaltmp(str0);
+      val = son[0]->val;
+      return ktmp;
     }
     std::string tmp1,tmp2,tmp3;
     tmp1 = "%" + std::to_string(tmpcnt);
@@ -779,15 +802,19 @@ class RelExp : public BaseAST {
         str0 += " = ";
         if(son[i]->type == _LT)
         {
+          val = (son[0]->val < son[i+1]->val);
           str0 += "lt";
         }else if(son[i]->type == _GT)
         {
+          val = (son[0]->val > son[i+1]->val);
           str0 += "gt";
         }else if(son[i]->type == _LE)
         {
+          val = (son[0]->val <= son[i+1]->val);
           str0 += "le";
         }else if(son[i]->type == _GE)
         {
+          val = (son[0]->val >= son[i+1]->val);
           str0 += "ge";
         }
         str0 += ' ';
@@ -795,7 +822,7 @@ class RelExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       }else
       {
         tmp2 = tmp1;
@@ -806,15 +833,19 @@ class RelExp : public BaseAST {
         str0 += " = ";
         if(son[i]->type == _LT)
         {
+          val = (val < son[i+1]->val);
           str0 += "lt";
         }else if(son[i]->type == _GT)
         {
+          val = (val > son[i+1]->val);
           str0 += "gt";
         }else if(son[i]->type == _LE)
         {
+          val = (val <= son[i+1]->val);
           str0 += "le";
         }else if(son[i]->type == _GE)
         {
+          val = (val >= son[i+1]->val);
           str0 += "ge";
         }
         str0 += " ";
@@ -822,7 +853,7 @@ class RelExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       } 
       
     }
@@ -844,7 +875,9 @@ class EqExp : public BaseAST {
    std::string retvaltmp(std::string& str0) override  {
     if(son.size() == 1)
     {
-      return son[0]->retvaltmp(str0);
+      std::string ktmp = son[0]->retvaltmp(str0);
+      val = son[0]->val;
+      return ktmp;
     }
     std::string tmp1,tmp2,tmp3;
     tmp1 = "%" + std::to_string(tmpcnt);
@@ -863,17 +896,19 @@ class EqExp : public BaseAST {
         if(son[i]->type == _EQ)
         {
           str0 += "eq";
+          val = (son[0]->val == son[i+1]->val);
         }
         else if(son[i]->type == _NE)
         {
           str0 += "ne";
+          val = (son[0]->val != son[i+1]->val);
         }
         str0 += ' ';
         str0 += tmp2.c_str();
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       }else
       {
         tmp2 = tmp1;
@@ -884,10 +919,12 @@ class EqExp : public BaseAST {
         str0 += " = ";
         if(son[i]->type == _EQ)
         {
+          val = (val == son[i+1]->val);
           str0 += "eq";
         }
         else if(son[i]->type == _NE)
         {
+          val = (val != son[i+1]->val);
           str0 += "ne";
         }
         str0 += " ";
@@ -895,7 +932,7 @@ class EqExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        std::cout<<str0<<std::endl;
+        // std::cout<<str0<<std::endl;
       } 
       
     }
@@ -917,7 +954,10 @@ class LAndExp : public BaseAST {
   std::string retvaltmp(std::string& str0) override  {
     if(son.size() == 1)
     {
-      return son[0]->retvaltmp(str0);
+      std::string ktmp = son[0]->retvaltmp(str0);
+      val = son[0]->val;
+      std::cout<<"LANDVAL "<<val<<std::endl;
+      return ktmp;
     }
     std::string tmp1, tmp2, tmp3;
     for(int i = 0; i < son.size(); i += 2)
@@ -927,9 +967,11 @@ class LAndExp : public BaseAST {
       std::cout<<son[i]->val<<std::endl;
       if(son[i]->val == 0)
       {
+        val = 0;
         return "0";
       }
     }
+    val = 1;
     return "1";
   }
 };
@@ -948,7 +990,10 @@ class LOrExp : public BaseAST {
   std::string retvaltmp(std::string& str0) override  {
     if(son.size() == 1)
     {
-      return son[0]->retvaltmp(str0);
+      std::string ktmp = son[0]->retvaltmp(str0);
+      val = son[0]->val;
+      std::cout<<"LORVAL "<<val<<std::endl;
+      return ktmp;
     }
     std::string tmp1, tmp2, tmp3;
     for(int i = 0; i < son.size(); i += 2)
@@ -956,9 +1001,11 @@ class LOrExp : public BaseAST {
       son[i]->retvaltmp(str0);
       if(son[i]->val >= 1)
       {
+        val = 1;
         return "1";
       }
     }
+    val = 0;
     return "0";
   }
 };
@@ -1222,7 +1269,7 @@ class VarDef: public BaseAST {
       (*cur_table)[tmp] = tmp1;
       value_table[tmp] = son[0]->val;
       std::cout<<"INITVAL VARDEF ONE"<<tmp1<<std::endl;
-      std::cout<<str0<<std::endl;
+      // std::cout<<str0<<std::endl;
     }
     else{
       str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
@@ -1230,7 +1277,7 @@ class VarDef: public BaseAST {
       (*cur_table)[tmp] = std::to_string(initval);
       value_table[tmp] = 0;
       std::cout<<"INITVAL VARDEF TWO"<<std::to_string(initval)<<std::endl;
-      std::cout<<str0<<std::endl;
+      // std::cout<<str0<<std::endl;
     }
    
 

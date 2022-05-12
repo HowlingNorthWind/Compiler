@@ -12,8 +12,6 @@ int main() {
     } else {
       d = 4;
     }
-    if (a == 0) return 1;
-    else if (a == 0 && a == -1) return 2;
   }
-  return a + b + c + d;
+  return 2;
 }
