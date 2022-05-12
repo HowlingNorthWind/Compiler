@@ -38,7 +38,7 @@ int cnt = 0;
 
 // lexer 返回的所有 token 种类的声明
 // 注意 IDENT 和 INT_CONST 会返回 token 的值, 分别对应 str_val 和 int_val
-%token INT RETURN IF ELSE
+%token INT RETURN IF ELSE WHILE BREAK CONTINUE
 %token <str_val> IDENT CONST
 %token <int_val> INT_CONST
 %token <ast_val> '+' '-' '*' '/' '%' '!' '='
@@ -334,7 +334,23 @@ Stmt
     ast->son.push_back($3);
     ast->son.push_back($5);
     $$ = ast;
-
+  }
+  | WHILE '(' Exp ')' Stmt{
+    auto ast = new StmtAST();
+    ast->fl_while = true;
+    ast->son.push_back($3);
+    ast->son.push_back($5);
+    $$ = ast;
+  }
+  | BREAK {
+    auto ast = new StmtAST();
+    ast->fl_break = true;
+    $$ = ast;
+  }
+  | CONTINUE {
+    auto ast = new StmtAST();
+    ast->fl_continue = true;
+    $$ = ast;
   }
   ;
 

@@ -1,17 +1,16 @@
 int main() {
-  int a = 0;
-  const int b = 1 - 1 * 2 + 1;
-  int c = 1, d = 2;
-  if (a || b) {
-    c = 3;
-  } else {
-    d = 3;
-    int a = 1;
-    if (a || b) {
-      c = 4;
-    } else {
-      d = 4;
+  int a = 1, b = 2;
+  while (a < 10) {
+    a = a + 1;
+    while (a < 5 && b < 10) {
+      b = b + 1;
+    }
+    while (b < 20) {
+      while (b < 6 || b == 6) {
+        b = b + 1;
+      }
+      b = b + 2;
     }
   }
-  return 2;
+  return a + b;
 }

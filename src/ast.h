@@ -10,7 +10,10 @@ extern FILE *yyout;
 extern int tmpcnt;
 extern int symcnt;
 extern int ifcnt;
+extern int whilecnt;
 extern int bblockcnt;
+extern std::string cur_end;
+extern std::string cur_entry;
 extern std::map<std::string, std::variant<int, std::string>> sym_table;
 extern std::map<std::string, std::variant<int, std::string>> var_table;
 extern std::map<std::string, int> value_table;
@@ -177,6 +180,9 @@ class StmtAST : public BaseAST {
   }
   bool ret = false;
   bool fl_if = false; 
+  bool fl_while = false;
+  bool fl_break = false;
+  bool fl_continue = false;
   void Dump(std::string& str0) const override {
     std::cout<<"Stmt"<<std::endl;
     
@@ -231,8 +237,40 @@ class StmtAST : public BaseAST {
       }
 
       str0 += "\%end" + std::to_string(tmp_ifcnt) + ":" + '\n';
-      std::cout<<str0<<std::endl;
+      // std::cout<<str0<<std::endl;
 
+    }else if(fl_while){
+      std::cout<<"STMT_WHILE"<<std::endl;
+      int tmp_whilecnt = whilecnt;
+      whilecnt += 1;
+      std::string tmp_end = cur_end;
+      std::string tmp_entry = cur_entry;
+
+      cur_end = "\%while_end"+std::to_string(tmp_whilecnt);
+      cur_entry = "\%while_entry"+std::to_string(tmp_whilecnt);
+      str0 += " jump \%while_entry"+std::to_string(tmp_whilecnt)+'\n';
+
+      str0 += "\%while_entry"+std::to_string(tmp_whilecnt)+':'+'\n';
+      std::string tmpexp = son[0]->retvaltmp(str0);
+      str0 += " br "+tmpexp+", \%while_body"+std::to_string(tmp_whilecnt)+", \%while_end"+std::to_string(tmp_whilecnt)+'\n';
+
+
+      str0 += "\%while_body"+std::to_string(tmp_whilecnt)+':'+'\n';
+      son[1]->Dump(str0);
+
+      str0 += " jump \%while_entry"+std::to_string(tmp_whilecnt)+'\n';
+
+      str0 += "\%while_end"+std::to_string(tmp_whilecnt)+':'+'\n';
+
+      cur_end = tmp_end;
+      cur_entry = tmp_entry;
+
+
+
+    }else if(fl_break){
+      str0 += " jump "+cur_end;
+    }else if(fl_continue){
+      str0 += " jump "+cur_entry;
     }else if(son.size() == 0){
       return;
     }else if(son[0]->type == _LVal){
