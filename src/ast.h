@@ -10,7 +10,10 @@ extern FILE *yyout;
 extern int tmpcnt;
 extern int symcnt;
 extern int ifcnt;
+extern int bblockcnt;
 extern std::map<std::string, std::variant<int, std::string>> sym_table;
+extern std::map<std::string, std::variant<int, std::string>> var_table;
+extern std::map<std::string, int> value_table;
 extern std::map<std::string, std::variant<int, std::string>> *cur_table;
 extern std::map<std::map<std::string, std::variant<int, std::string>>*, \
 std::map<std::string, std::variant<int, std::string>>*> total_table;
@@ -97,6 +100,15 @@ class FuncDefAST : public BaseAST {
 
     str0 += "\%entry:\n";
     block->Dump(str0);
+
+    char c = str0.back();
+    while(c!= '\%'){
+      str0.pop_back();
+      c = str0.back();
+    }
+    str0.pop_back();
+    
+    
     str0 += "}";
     // fprintf(yyout, "}");
     std::cout << "}";
@@ -180,6 +192,9 @@ class StmtAST : public BaseAST {
       str0 += " ret ";
       std::cout<<str0<<std::endl;
       str0 += tmp.c_str();
+      str0 += '\n';
+      str0 += "\%"+std::to_string(bblockcnt)+':'+'\n';
+      bblockcnt += 1;
       std::cout<<str0<<std::endl;
       // std::cout <<"  "<< "ret ";
       // std::cout << number;
@@ -187,6 +202,9 @@ class StmtAST : public BaseAST {
         std::cout<<"STMT RETURN NULL"<<std::endl;
         str0 += " ret ";
         str0 += "0";
+        str0 += '\n';
+        str0 += "\%"+std::to_string(bblockcnt)+':'+'\n';
+        bblockcnt += 1;
         std::cout<<str0<<std::endl;
       }
     }else if(fl_if == true){
@@ -194,15 +212,22 @@ class StmtAST : public BaseAST {
       std::string tmpexp = son[0]->retvaltmp(str0);
       int tmp_ifcnt = ifcnt;
       ifcnt += 1;
-      str0 += " br "+tmpexp+", "+"\%then"+std::to_string(tmp_ifcnt)+", "+"\%else"+std::to_string(tmp_ifcnt)+'\n';
+      if(son.size()==3){
+        str0 += " br "+tmpexp+", "+"\%then"+std::to_string(tmp_ifcnt)+", "+"\%else"+std::to_string(tmp_ifcnt)+'\n';
+      }
       
+      if(son.size()==2){
+        str0 += " br "+tmpexp+", "+"\%then"+std::to_string(tmp_ifcnt)+", "+"\%end"+std::to_string(tmp_ifcnt)+'\n';
+      }
+
+
       str0 += "\%then"+std::to_string(tmp_ifcnt)+":"+'\n';
-      son[1]->retvaltmp(str0);
-      str0 += " jump \%end" + std::to_string(tmp_ifcnt) + ":" + '\n';
+      son[1]->Dump(str0);
+      str0 += " jump \%end" + std::to_string(tmp_ifcnt) + '\n';
       if(son.size()==3){
         str0 += "\%else"+std::to_string(tmp_ifcnt)+":"+'\n';
-        son[2]->retvaltmp(str0);
-        str0 += " jump \%end" + std::to_string(tmp_ifcnt) + ":" + '\n';
+        son[2]->Dump(str0);
+        str0 += " jump \%end" + std::to_string(tmp_ifcnt) + '\n';
       }
 
       str0 += "\%end" + std::to_string(tmp_ifcnt) + ":" + '\n';
@@ -269,6 +294,8 @@ class ExpAST : public BaseAST {
     std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"<<std::endl;
     std::cout<<"Exp"<<std::endl;
     std::string tmp = son[0]->retvaltmp(str0);
+    std::cout<<"EXPAAAAAAAAAAA"<<std::endl;
+    std::cout<<tmp<<std::endl;
     return tmp;
   }
 };
@@ -383,10 +410,12 @@ class UnaryExp : public BaseAST {
           tmp1 = '@' + tmp1;
           str0 += " "+tmptmp+" = load "+resident+'\n';
           std::cout<<str0<<std::endl;
+          val = ptr->son[0]->val;
           return tmptmp;
         }else if(variant_tmp.index() == 0){
-          int val = std::get<int>(variant_tmp);
-          std::string tmp = std::to_string(val);
+          int tmpval = std::get<int>(variant_tmp);
+          std::string tmp = std::to_string(tmpval);
+          val = tmpval;
           return tmp;
         }
         
@@ -1179,7 +1208,11 @@ class VarDef: public BaseAST {
     // }
 
     tmp = '@' + ident + '_' + std::to_string(symcnt);
-    str0 += " " + tmp + " = alloc i32"+"\n";
+    if(var_table.find(tmp) ==  var_table.end()){
+      str0 += " " + tmp + " = alloc i32"+"\n";
+      var_table[tmp] = "used";
+    }
+   
     std::cout<<"VARDEF  "<<tmp<<std::endl;
     std::cout<<"SYMCNT  "<<symcnt<<std::endl;
     if(son.size() > 0){
@@ -1187,6 +1220,7 @@ class VarDef: public BaseAST {
       str0 += " store " + tmp1 +", " + tmp+'\n';
       str0 += "\n";
       (*cur_table)[tmp] = tmp1;
+      value_table[tmp] = son[0]->val;
       std::cout<<"INITVAL VARDEF ONE"<<tmp1<<std::endl;
       std::cout<<str0<<std::endl;
     }
@@ -1194,6 +1228,7 @@ class VarDef: public BaseAST {
       str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
       str0 += "\n";
       (*cur_table)[tmp] = std::to_string(initval);
+      value_table[tmp] = 0;
       std::cout<<"INITVAL VARDEF TWO"<<std::to_string(initval)<<std::endl;
       std::cout<<str0<<std::endl;
     }
@@ -1215,8 +1250,9 @@ class InitVal: public BaseAST {
    
   }
   std::string retvaltmp(std::string& str0) override  {
-    
-    return son[0]->retvaltmp(str0);
+    std::string tmp = son[0]->retvaltmp(str0);
+    val = son[0]->val;
+    return tmp;
   }
 };
 

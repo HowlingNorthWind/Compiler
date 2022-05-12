@@ -23,7 +23,10 @@ int tmpcnt = 0;
 int cnt0 = 0;
 int symcnt = 0;
 int ifcnt = 0;
+int bblockcnt = 0;
 map<string, variant<int, string>> sym_table;
+map<string, variant<int, string>> var_table;
+map<string, int> value_table;
 map<string, variant<int, string>> *cur_table;
 map<map<string, variant<int, string>>*,map<string, variant<int, string>>*> total_table;
 
