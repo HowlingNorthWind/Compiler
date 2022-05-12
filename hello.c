@@ -1,7 +1,5 @@
 int main() {
-  {{{{{{;};};}}}}
-  {
-    return ;
-  }
-  // return 1% 77;
+  int a = 3;
+  
+  return 2;
 }

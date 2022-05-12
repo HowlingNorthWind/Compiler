@@ -38,7 +38,7 @@ int cnt = 0;
 
 // lexer 返回的所有 token 种类的声明
 // 注意 IDENT 和 INT_CONST 会返回 token 的值, 分别对应 str_val 和 int_val
-%token INT RETURN
+%token INT RETURN IF ELSE
 %token <str_val> IDENT CONST
 %token <int_val> INT_CONST
 %token <ast_val> '+' '-' '*' '/' '%' '!' '='
@@ -174,6 +174,7 @@ VarDef
     auto ast = new VarDef();
     ast->ident = *unique_ptr<string>($1);
     ast->initval = $3->val;
+    ast->val = $3->val;
     cout<<"VarDef"<<endl;
     cout<<ast->val<<endl;
     ast->son.push_back($3);
@@ -187,6 +188,8 @@ InitVal
     auto ast = new InitVal();
     ast->son.push_back($1);
     ast->val = $1->val;
+    cout<<"InitVal"<<endl;
+    cout<<ast->val<<endl;
     $$ = ast;
   }
   ;
@@ -314,6 +317,24 @@ Stmt
     auto ast = new StmtAST();
     ast->ret = true;
     $$ = ast;
+  }
+  | IF '(' Exp ')' Stmt ELSE Stmt{
+    std::cout<<"STMT_IF_ELSE"<<std::endl;
+    auto ast = new StmtAST();
+    ast->fl_if = true;
+    ast->son.push_back($3);
+    ast->son.push_back($5);
+    ast->son.push_back($7);
+    $$ = ast;
+  }
+  | IF '(' Exp ')' Stmt {
+    std::cout<<"STMT_IF_ONLY"<<std::endl;
+    auto ast = new StmtAST();
+    ast->fl_if = true;
+    ast->son.push_back($3);
+    ast->son.push_back($5);
+    $$ = ast;
+
   }
   ;
 

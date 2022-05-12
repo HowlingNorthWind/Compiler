@@ -9,6 +9,7 @@ extern FILE *yyout;
 // 所有 AST 的基类
 extern int tmpcnt;
 extern int symcnt;
+extern int ifcnt;
 extern std::map<std::string, std::variant<int, std::string>> sym_table;
 extern std::map<std::string, std::variant<int, std::string>> *cur_table;
 extern std::map<std::map<std::string, std::variant<int, std::string>>*, \
@@ -163,6 +164,7 @@ class StmtAST : public BaseAST {
     type = _Stmt;
   }
   bool ret = false;
+  bool fl_if = false; 
   void Dump(std::string& str0) const override {
     std::cout<<"Stmt"<<std::endl;
     
@@ -187,6 +189,25 @@ class StmtAST : public BaseAST {
         str0 += "0";
         std::cout<<str0<<std::endl;
       }
+    }else if(fl_if == true){
+      std::cout<<"STMT__IF"<<std::endl;
+      std::string tmpexp = son[0]->retvaltmp(str0);
+      int tmp_ifcnt = ifcnt;
+      ifcnt += 1;
+      str0 += " br "+tmpexp+", "+"\%then"+std::to_string(tmp_ifcnt)+", "+"\%else"+std::to_string(tmp_ifcnt)+'\n';
+      
+      str0 += "\%then"+std::to_string(tmp_ifcnt)+":"+'\n';
+      son[1]->retvaltmp(str0);
+      str0 += " jump \%end" + std::to_string(tmp_ifcnt) + ":" + '\n';
+      if(son.size()==3){
+        str0 += "\%else"+std::to_string(tmp_ifcnt)+":"+'\n';
+        son[2]->retvaltmp(str0);
+        str0 += " jump \%end" + std::to_string(tmp_ifcnt) + ":" + '\n';
+      }
+
+      str0 += "\%end" + std::to_string(tmp_ifcnt) + ":" + '\n';
+      std::cout<<str0<<std::endl;
+
     }else if(son.size() == 0){
       return;
     }else if(son[0]->type == _LVal){
