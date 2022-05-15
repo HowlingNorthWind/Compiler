@@ -52,6 +52,7 @@ class BaseAST {
   int val;
   char op;
   bool isint = false;
+  std::string func_type_all;
 };
 
 // CompUnit 是 BaseAST
@@ -59,12 +60,29 @@ class CompUnitAST : public BaseAST {
  public:
   // 用智能指针管理对象
   std::unique_ptr<BaseAST> func_def;
-
+  
   void Dump(std::string& str0) const override {
     // std::cout << "CompUnitAST { ";
     cur_table = &sym_table;
     str0 = "";
-    func_def->Dump(str0);
+    str0 += "decl @getint(): i32\n";
+    str0 += "decl @getch(): i32\n";
+    str0 += "decl @getarray(*i32): i32\n";
+    str0 += "decl @putint(i32)\n";
+    str0 += "decl @putch(i32)\n";
+    str0 += "decl @putarray(i32, *i32)\n";
+    str0 += "decl @starttime()\n";
+    str0 += "decl @stoptime()\n";
+
+    int sz = son.size();
+    std::cout<<"COMP_UNIT_AST_SIZE  "<<sz<<std::endl;
+    for(int i = 0; i < sz; i++){
+      std::cout<<"FUNCDEF_INDEX  "<<i<<std::endl;
+      son[i]->Dump(str0);
+      std::cout<<"FINISH ONE FUNCDEF"<<std::endl;
+      std::cout<<"COMP_UNIT_AST_SIZE  "<<sz<<std::endl;
+    }
+    // func_def->Dump(str0);
     // std::cout << " }";
   }
 };
@@ -75,9 +93,9 @@ class FuncDefAST : public BaseAST {
   std::unique_ptr<BaseAST> func_type;
   std::string ident;
   std::unique_ptr<BaseAST> block;
-
+  std::string func_type_str;
   void Dump(std::string& str0) const override {
-    // std::cout << "FuncDefAST { ";
+    std::cout << "FuncDefAST  "<<ident<<" "<<str0<<std::endl;
     // func_type->Dump();
     // std::cout << ", " << ident << ", ";
     // block->Dump();
@@ -90,34 +108,77 @@ class FuncDefAST : public BaseAST {
     // std::cout << " }";
     str0 += "fun @";
     str0 += ident;
-    str0 += "(): ";
-    // fprintf(yyout, "fun @");
-    // fprintf(yyout, ident.c_str());
-    // fprintf(yyout, "(): ");
-    std::cout << "fun @";
-    std::cout << ident << "(): ";
+    str0 += "(";
+    int sz = son.size();
+    if(sz == 3){
+      son[1]->Dump(str0);
+    }
+    str0 += ")";
+   
 
+    std::cout<<"ASDFGHGFDS"<<str0<<std::endl;
     
-
+    
     func_type->Dump(str0);
+    std::cout<<"func_TYPE"<<str0<<std::endl;
     str0 += " { \n";
     // fprintf(yyout, " { \n");
-    std::cout << " { "<<std::endl;
+    // std::cout << " { "<<std::endl;
 
     str0 += "\%entry:\n";
+
+    std::cout<<str0<<std::endl;
+
+    std::map<std::string, std::variant<int, std::string>> new_table;
+    std::map<std::string, std::variant<int, std::string>> *tmp_table = cur_table;
+    cur_table = &new_table;
+    total_table[cur_table] =  tmp_table;
+    std::map<std::string, std::variant<int, std::string>>::iterator iter;
+    std::cout<<"ITERATOR CUR"<<std::endl;
+    for(iter = (*cur_table).begin(); iter != (*cur_table).end(); ++iter){
+      std::cout<<iter->first<<std::endl;
+    }
+    std::cout<<"ITERATOR TMP"<<std::endl;
+    for(iter = (*tmp_table).begin(); iter != (*tmp_table).end(); ++iter){
+      std::cout<<iter->first<<std::endl;
+    }
+    symcnt += 1;
+
+    if(sz == 3){
+      int numOfFParam = son[1]->son.size();
+      
+      for(int i = 0; i < numOfFParam; i++){
+        std::string ident = son[1]->son[i]->retvaltmp(str0);
+        std::string identIndex = "@"+ident+'_'+std::to_string(symcnt);
+        std::string paramName = "@"+ident;
+        str0 += " @"+ident+'_'+std::to_string(symcnt);
+        str0 += " = alloc i32\n";
+        str0 += " store @"+ident+", @"+ident+'_'+std::to_string(symcnt)+'\n';
+        (*cur_table)[identIndex] = paramName;
+      }
+    }
+    
     block->Dump(str0);
 
-    char c = str0.back();
-    while(c!= '\%'){
-      str0.pop_back();
-      c = str0.back();
+    if(son[0]->func_type_all == "int"){
+       char c = str0.back();
+        while(c!= '\%'){
+          str0.pop_back();
+          c = str0.back();
+        }
+        str0.pop_back();
+    }else{
+      str0 += " ret \n";
     }
-    str0.pop_back();
+   
     
     
-    str0 += "}";
+    str0 += "}\n";
+    cur_table = tmp_table;
+    symcnt -= 1;
+    std::cout<<str0<<std::endl;
     // fprintf(yyout, "}");
-    std::cout << "}";
+    // std::cout << "}";
   }
 };
 
@@ -127,14 +188,64 @@ class FuncTypeAST : public BaseAST {
   std::string func_type_str;
 
   void Dump(std::string& str0) const override {
+    std::cout<<"FuncTypeASTTT"<<std::endl;
     if(func_type_str == "int")
     {
-        str0 += "i32";
+        str0 += ": i32";
         // fprintf(yyout, "i32");
         std::cout << "i32";
-    } 
+    } else if(func_type_str == "void"){
+      str0 += "";
+      
+    }
   }
 };
+
+class FuncFParamsAST : public BaseAST {
+  public:
+  void Dump(std::string& str0) const override {
+    int sz = son.size();
+    for(int i = 0; i < sz; i++){
+      son[i]->Dump(str0);
+      if(i != sz - 1){
+        str0 += ", ";
+      }
+    }
+    
+  }
+
+};
+
+class FuncFParamAST : public BaseAST {
+  public:
+  std::string ident;
+  void Dump(std::string& str0) const override {
+    str0 += "@"+ident;
+    str0 += ": ";
+    son[0]->Dump(str0);
+    
+  }
+  std::string retvaltmp(std::string& str0) override{
+    return ident;
+  }
+
+};
+
+class FuncRParamsAST : public BaseAST {
+  public:
+  void Dump(std::string& str0) const override {
+    for(int i = 0; i < son.size(); i++){
+      std::string regForFuncRParam = son[i]->retvaltmp(str0);
+      if(i!=0){
+        str0+=", ";
+      }
+      str0 += regForFuncRParam;
+      
+    }
+  }
+
+};
+
 
 // Block 也是 BaseAST
 class BlockAST : public BaseAST {
@@ -170,7 +281,7 @@ class BlockAST : public BaseAST {
     cur_table = tmp_table;
     symcnt -= 1;
     // fprintf(yyout, "\n");
-    std::cout << std::endl;
+    // std::cout << std::endl;
   }
 };
 
@@ -204,7 +315,7 @@ class StmtAST : public BaseAST {
       str0 += '\n';
       str0 += "\%"+std::to_string(bblockcnt)+':'+'\n';
       bblockcnt += 1;
-      // std::cout<<str0<<std::endl;
+      std::cout<<str0<<std::endl;
       // std::cout <<"  "<< "ret ";
       // std::cout << number;
       }else{
@@ -214,7 +325,7 @@ class StmtAST : public BaseAST {
         str0 += '\n';
         str0 += "\%"+std::to_string(bblockcnt)+':'+'\n';
         bblockcnt += 1;
-        // std::cout<<str0<<std::endl;
+        std::cout<<str0<<std::endl;
       }
     }else if(fl_if == true){
       std::cout<<"STMT__IF"<<std::endl;
@@ -241,7 +352,7 @@ class StmtAST : public BaseAST {
       }
 
       str0 += "\%end" + std::to_string(tmp_ifcnt) + ":" + '\n';
-      // std::cout<<str0<<std::endl;
+      std::cout<<str0<<std::endl;
 
     }else if(fl_while){
       std::cout<<"STMT_WHILE"<<std::endl;
@@ -312,7 +423,7 @@ class StmtAST : public BaseAST {
 
       str0 += " store " + tmpexp + ", " + resident+'\n';
       str0 += '\n';
-      // std::cout<<str0<<std::endl;
+      std::cout<<str0<<std::endl;
     }else if(son[0]->type == _Exp){
       std::cout<<"STMT EXP"<<std::endl;
       son[0]->retvaltmp(str0);
@@ -348,6 +459,7 @@ class ExpAST : public BaseAST {
     val = son[0]->val;
     std::cout<<"EXPAAAAAAAAAAA"<<std::endl;
     std::cout<<tmp<<std::endl;
+    std::cout<<str0<<std::endl;
     return tmp;
   }
 };
@@ -389,7 +501,8 @@ class UnaryExp : public BaseAST {
 
   int cnt1;
   int cnt2;
-  
+  bool is_ident;
+  std::string ident;
   UnaryExp()
   {
     type = _UnaryExp;
@@ -404,7 +517,17 @@ class UnaryExp : public BaseAST {
     std::cout<<"11111111"<<std::endl;
     std::string tmp1;
     std::string tmp2;
-    if(son[0]->type == _PrimaryExp)
+    if(is_ident == true){
+      std::string regForFun = '%'+std::to_string(tmpcnt);
+      tmpcnt++;
+      str0 += " "+regForFun+" = call @"+ident+"(";
+      if(son.size()>0){
+        son[0]->Dump(str0);
+      }
+      str0 += ")\n";
+      return regForFun;
+
+    }else if(son[0]->type == _PrimaryExp)
     {
       std::cout<<"a11111111"<<std::endl;
       BaseAST* ptr = son[0]; 
@@ -466,7 +589,7 @@ class UnaryExp : public BaseAST {
           tmpcnt++;
           tmp1 = '@' + tmp1;
           str0 += " "+tmptmp+" = load "+resident+'\n';
-          // std::cout<<str0<<std::endl;
+          std::cout<<str0<<std::endl;
           // val = ptr->son[0]->val;
           return tmptmp;
         }else if(variant_tmp.index() == 0){
@@ -1168,6 +1291,9 @@ class BType: public BaseAST {
   }
   
   void Dump(std::string& str0) const override {
+    if(ident == "int"){
+      str0 += "i32";
+    }
    
   }
   std::string retvaltmp(std::string& str0) override  {

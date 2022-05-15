@@ -38,7 +38,7 @@ int cnt = 0;
 
 // lexer 返回的所有 token 种类的声明
 // 注意 IDENT 和 INT_CONST 会返回 token 的值, 分别对应 str_val 和 int_val
-%token INT RETURN IF ELSE WHILE BREAK CONTINUE
+%token INT RETURN IF ELSE WHILE BREAK CONTINUE VOID
 %token <str_val> IDENT CONST
 %token <int_val> INT_CONST
 %token <ast_val> '+' '-' '*' '/' '%' '!' '='
@@ -49,7 +49,7 @@ int cnt = 0;
 %type <ast_val> RelExp EqExp LAndExp LOrExp  Decl ConstDecl ConstDef_dup BType
 %type <ast_val> ConstDef BlockItem_dup BlockItem LVal ConstExp ConstInitVal
 %type <ast_val> VarDecl VarDef_dup VarDef InitVal
-
+%type <ast_val> FuncFParams FuncFParam FuncRParams CompUnit
 
 %%
 
@@ -61,10 +61,29 @@ int cnt = 0;
 CompUnit
   : FuncDef {
     std::cout<<"COMPUNIT START"<<std::endl;
-    auto comp_unit = make_unique<CompUnitAST>();
-    comp_unit->func_def = unique_ptr<BaseAST>($1);
-    ast = move(comp_unit);
+    // auto comp_unit = make_unique<CompUnitAST>();
+    // comp_unit->func_def = unique_ptr<BaseAST>($1);
+    // comp_unit->son.push_back($1);
+    auto tmpast = new CompUnitAST();
+    tmpast->func_def = unique_ptr<BaseAST>($1);
+    tmpast->son.push_back($1);
+    $$ = tmpast;
+    auto tmptmp = unique_ptr<BaseAST>(tmpast);
+    // auto comp_unit = make_unique<CompUnitAST>();
+    // comp_unit = tmpast;
+    
+    ast = move(tmptmp);
+    // ast = move(comp_unit);
+    
+    // ast = new CompUnitAST();
+    // ast->func_def = unique_ptr<BaseAST>($1);
+    // ast->son.push_back($1);
+    // $$ = ast;
     std::cout<<"COMPUNIT END"<<std::endl;
+  }
+  | CompUnit FuncDef {
+    $1->son.push_back($2);
+    $$ = $1;
   }
   ;
 
@@ -201,7 +220,21 @@ FuncDef
     auto ast = new FuncDefAST();
     ast->func_type = unique_ptr<BaseAST>($1);
     ast->ident = *unique_ptr<string>($2);
+    std::cout<<"FuncDef_YYYYY"<<std::endl;
+    std::cout<<ast->ident<<std::endl;
     ast->block = unique_ptr<BaseAST>($5);
+    ast->son.push_back($1);
+    ast->son.push_back($5);
+    $$ = ast;
+  }
+  | FuncType IDENT '(' FuncFParams ')' Block {
+    auto ast = new FuncDefAST();
+    ast->func_type = unique_ptr<BaseAST>($1);
+    ast->ident = *unique_ptr<string>($2);
+    ast->block = unique_ptr<BaseAST>($6);
+    ast->son.push_back($1);
+    ast->son.push_back($4);
+    ast->son.push_back($6);
     $$ = ast;
   }
   ;
@@ -212,6 +245,35 @@ FuncType
     auto ast = new FuncTypeAST();
     string str = "int";
     ast->func_type_str = str;
+    ast->func_type_all = str;
+    $$ = ast;
+  }
+  | VOID {
+    auto ast = new FuncTypeAST();
+    string str = "void";
+    ast->func_type_str = str;
+    ast->func_type_all = str;
+    $$ = ast;
+  }
+  ;
+
+FuncFParams
+  : FuncFParam {
+    auto ast = new FuncFParamsAST();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | FuncFParams ',' FuncFParam {
+    $1->son.push_back($3);
+    $$ = $1;
+  }
+  ;
+
+FuncFParam
+  : BType IDENT {
+    auto ast = new FuncFParamAST();
+    ast->son.push_back($1);
+    ast->ident = *unique_ptr<string>($2);
     $$ = ast;
   }
   ;
@@ -431,6 +493,31 @@ UnaryExp
       ast->val = $2->val;
     }
     $$ = ast;
+  }
+  | IDENT '(' ')' {
+    auto ast = new UnaryExp();
+    ast->is_ident = true;
+    ast->ident = *unique_ptr<string>($1);
+    $$ = ast;
+  }
+  | IDENT '(' FuncRParams ')' {
+    auto ast = new UnaryExp();
+    ast->is_ident = true;
+    ast->ident = *unique_ptr<string>($1);
+    ast->son.push_back($3);
+    $$ = ast;
+  }
+  ;
+
+FuncRParams
+  : Exp {
+    auto ast = new FuncRParamsAST();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | FuncRParams ',' Exp {
+    $1->son.push_back($3);
+    $$ = $1;
   }
   ;
 
