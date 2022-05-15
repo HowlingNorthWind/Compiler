@@ -20,6 +20,7 @@ extern std::string cur_entry;
 extern std::map<std::string, std::variant<int, std::string>> sym_table;
 extern std::map<std::string, std::variant<int, std::string>> var_table;
 extern std::map<std::string, int> value_table;
+extern std::map<std::string, std::string> funcTable;
 extern std::map<std::string, std::variant<int, std::string>> *cur_table;
 extern std::map<std::map<std::string, std::variant<int, std::string>>*, \
 std::map<std::string, std::variant<int, std::string>>*> total_table;
@@ -108,6 +109,7 @@ class FuncDefAST : public BaseAST {
     // std::cout << " }";
     str0 += "fun @";
     str0 += ident;
+    funcTable[ident] = son[0]->func_type_all;
     str0 += "(";
     int sz = son.size();
     if(sz == 3){
@@ -518,9 +520,16 @@ class UnaryExp : public BaseAST {
     std::string tmp1;
     std::string tmp2;
     if(is_ident == true){
-      std::string regForFun = '%'+std::to_string(tmpcnt);
-      tmpcnt++;
-      str0 += " "+regForFun+" = call @"+ident+"(";
+      std::string regForFun;
+      if(funcTable[ident] == "int"){
+        regForFun = '%'+std::to_string(tmpcnt);
+        tmpcnt++;
+        str0 += " "+regForFun+" = call @"+ident+"(";
+      }else if(funcTable[ident] == "void"){
+        regForFun = "";
+        str0 += " call @"+ident+'(';
+      }
+      
       if(son.size()>0){
         son[0]->Dump(str0);
       }
