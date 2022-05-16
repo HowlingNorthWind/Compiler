@@ -84,7 +84,6 @@ class CompUnitAST : public BaseAST {
     funcTable["starttime"] = "void";
     funcTable["stoptime"] = "void";
 
-
     int sz = son.size();
     std::cout<<"COMP_UNIT_AST_SIZE  "<<sz<<std::endl;
     symcnt += 1;
