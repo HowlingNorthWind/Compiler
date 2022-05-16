@@ -75,6 +75,16 @@ class CompUnitAST : public BaseAST {
     str0 += "decl @starttime()\n";
     str0 += "decl @stoptime()\n";
 
+    funcTable["getint"] = "int";
+    funcTable["getch"] = "int";
+    funcTable["getarray"] = "int";
+    funcTable["putint"] = "void";
+    funcTable["putch"] = "void";
+    funcTable["putarray"] = "void";
+    funcTable["starttime"] = "void";
+    funcTable["stoptime"] = "void";
+
+
     int sz = son.size();
     std::cout<<"COMP_UNIT_AST_SIZE  "<<sz<<std::endl;
     symcnt += 1;
