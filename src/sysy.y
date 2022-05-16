@@ -38,8 +38,9 @@ int cnt = 0;
 
 // lexer 返回的所有 token 种类的声明
 // 注意 IDENT 和 INT_CONST 会返回 token 的值, 分别对应 str_val 和 int_val
-%token INT RETURN IF ELSE WHILE BREAK CONTINUE VOID
-%token <str_val> IDENT CONST
+%token INT RETURN IF ELSE WHILE BREAK CONTINUE VOID CONST
+%token '(' ')' '[' ']' '{' '}' ';' ','
+%token <str_val> IDENT 
 %token <int_val> INT_CONST
 %token <ast_val> '+' '-' '*' '/' '%' '!' '='
 %token <ast_val> LE GE EQ NE AND OR LT GT
@@ -59,7 +60,15 @@ int cnt = 0;
 // 此时我们应该把 FuncDef 返回的结果收集起来, 作为 AST 传给调用 parser 的函数
 // $1 指代规则里第一个符号的返回值, 也就是 FuncDef 的返回值
 CompUnit
-  : FuncDef {
+  : CompUnit FuncDef {
+    $1->son.push_back($2);
+    $$ = $1;
+  }
+  | CompUnit Decl {
+    $1->son.push_back($2);
+    $$ = $1;
+  }
+  | FuncDef {
     std::cout<<"COMPUNIT START"<<std::endl;
     // auto comp_unit = make_unique<CompUnitAST>();
     // comp_unit->func_def = unique_ptr<BaseAST>($1);
@@ -81,9 +90,15 @@ CompUnit
     // $$ = ast;
     std::cout<<"COMPUNIT END"<<std::endl;
   }
-  | CompUnit FuncDef {
-    $1->son.push_back($2);
-    $$ = $1;
+  | Decl {
+    std::cout<<"COMPUNIT DECL START"<<std::endl;
+    auto tmpast = new CompUnitAST();
+    tmpast->func_def = unique_ptr<BaseAST>($1);
+    tmpast->son.push_back($1);
+    $$ = tmpast;
+    auto tmptmp = unique_ptr<BaseAST>(tmpast);
+    ast = move(tmptmp);
+    std::cout<<"COMPUNIT DECL END"<<std::endl;
   }
   ;
 
@@ -100,11 +115,13 @@ CompUnit
 
 Decl
   : ConstDecl {
+    std::cout<<"Decl"<<std::endl;
     auto ast = new Decl();
     ast->son.push_back($1);
     $$ = ast;
   }
   | VarDecl {
+    std::cout<<"Decl"<<std::endl;
     auto ast = new Decl();
     ast->son.push_back($1);
     $$ = ast;
@@ -113,8 +130,8 @@ Decl
 
 ConstDecl
   : CONST BType ConstDef_dup ';'{
+    std::cout<<"ConstDecl"<<std::endl;
     auto ast = new ConstDecl();
-    
     ast->son.push_back($2);
     ast->son.push_back($3);
     $$ = ast;
@@ -136,7 +153,19 @@ BType
   : INT {
     auto ast = new BType();
     ast->ident = "int";
+    string str = "int";
+    // ast->func_type_str = str;
+    ast->func_type_all = str;
     $$ = ast;
+  }
+  | VOID {
+    auto ast = new BType();
+    ast->ident = "void";
+    string str = "void";
+    // ast->func_type_str = str;
+    ast->func_type_all = str;
+    $$ = ast;
+
   }
   ;
 
@@ -163,6 +192,7 @@ ConstInitVal
 
 VarDecl 
   : BType VarDef_dup ';' {
+    std::cout<<"VarDecl"<<std::endl;
     auto ast = new VarDecl();
     ast->son.push_back($1);
     ast->son.push_back($2);
@@ -171,12 +201,15 @@ VarDecl
   ;
 
 VarDef_dup
-  :  VarDef {
+  : VarDef {
+    std::cout<<"VarDef_dup"<<std::endl;
     auto ast = new VarDef_dup();
     ast->son.push_back($1);
     $$ = ast;
+    std::cout<<"VarDef_dup Finish"<<std::endl;
   }
   | VarDef_dup ',' VarDef {
+    std::cout<<"VarDef_dup"<<std::endl;
     $1->son.push_back($3);
     $$ = $1;
   } 
@@ -184,12 +217,15 @@ VarDef_dup
 
 VarDef
   : IDENT {
+    std::cout<<"VarDef"<<std::endl;
     auto ast = new VarDef();
     ast->ident = *unique_ptr<string>($1);
+    std::cout<<ast->ident<<std::endl;
     sym_table[ast->ident] = "";
     $$ = ast;
   }
   | IDENT '=' InitVal {
+    std::cout<<"VarDef"<<std::endl;
     auto ast = new VarDef();
     ast->ident = *unique_ptr<string>($1);
     ast->initval = $3->val;
@@ -214,8 +250,9 @@ InitVal
   ;
 
 
+
 FuncDef
-  : FuncType IDENT '(' ')' Block {
+  : BType IDENT '(' ')' Block {
     std::cout<<"FUNCDEF"<<std::endl;
     auto ast = new FuncDefAST();
     ast->func_type = unique_ptr<BaseAST>($1);
@@ -227,7 +264,7 @@ FuncDef
     ast->son.push_back($5);
     $$ = ast;
   }
-  | FuncType IDENT '(' FuncFParams ')' Block {
+  | BType IDENT '(' FuncFParams ')' Block {
     auto ast = new FuncDefAST();
     ast->func_type = unique_ptr<BaseAST>($1);
     ast->ident = *unique_ptr<string>($2);
@@ -246,6 +283,7 @@ FuncType
     string str = "int";
     ast->func_type_str = str;
     ast->func_type_all = str;
+    // ast->son.push_back($1);
     $$ = ast;
   }
   | VOID {
@@ -277,6 +315,11 @@ FuncFParam
     $$ = ast;
   }
   ;
+
+
+
+
+
 
 Block
   : '{' BlockItem_dup '}' {
@@ -404,12 +447,12 @@ Stmt
     ast->son.push_back($5);
     $$ = ast;
   }
-  | BREAK {
+  | BREAK ';'{
     auto ast = new StmtAST();
     ast->fl_break = true;
     $$ = ast;
   }
-  | CONTINUE {
+  | CONTINUE ';'{
     auto ast = new StmtAST();
     ast->fl_continue = true;
     $$ = ast;

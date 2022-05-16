@@ -77,12 +77,15 @@ class CompUnitAST : public BaseAST {
 
     int sz = son.size();
     std::cout<<"COMP_UNIT_AST_SIZE  "<<sz<<std::endl;
+    symcnt += 1;
     for(int i = 0; i < sz; i++){
       std::cout<<"FUNCDEF_INDEX  "<<i<<std::endl;
       son[i]->Dump(str0);
       std::cout<<"FINISH ONE FUNCDEF"<<std::endl;
+      std::cout<<str0<<std::endl;
       std::cout<<"COMP_UNIT_AST_SIZE  "<<sz<<std::endl;
     }
+    symcnt -= 1;
     // func_def->Dump(str0);
     // std::cout << " }";
   }
@@ -120,8 +123,12 @@ class FuncDefAST : public BaseAST {
 
     std::cout<<"ASDFGHGFDS"<<str0<<std::endl;
     
-    
-    func_type->Dump(str0);
+    if(son[0]->func_type_all == "int"){
+      str0 += ": i32";
+    }else if(son[0]->func_type_all == "void"){
+      str0 += "";
+    }
+    // func_type->Dump(str0);
     std::cout<<"func_TYPE"<<str0<<std::endl;
     str0 += " { \n";
     // fprintf(yyout, " { \n");
@@ -245,6 +252,7 @@ class FuncRParamsAST : public BaseAST {
       
     }
   }
+  
 
 };
 
@@ -524,16 +532,41 @@ class UnaryExp : public BaseAST {
       if(funcTable[ident] == "int"){
         regForFun = '%'+std::to_string(tmpcnt);
         tmpcnt++;
+        int numForRParams = son[0]->son.size();
+        std::vector<std::string> allRegsForFuncRParams;
+        for(int i = 0; i < numForRParams; i++){
+          std::string regForFuncRParam = son[0]->son[i]->retvaltmp(str0);
+          allRegsForFuncRParams.push_back(regForFuncRParam);
+        }
+
         str0 += " "+regForFun+" = call @"+ident+"(";
+        for(int i = 0; i < allRegsForFuncRParams.size(); i++){
+          if(i!=0){
+            str0+=", ";
+          }
+          str0 += allRegsForFuncRParams[i];
+        }
+        str0 += ")\n";
       }else if(funcTable[ident] == "void"){
         regForFun = "";
+        
+        int numForRParams = son[0]->son.size();
+        std::vector<std::string> allRegsForFuncRParams;
+        for(int i = 0; i < numForRParams; i++){
+          std::string regForFuncRParam = son[0]->son[i]->retvaltmp(str0);
+          allRegsForFuncRParams.push_back(regForFuncRParam);
+        }
+
+
         str0 += " call @"+ident+'(';
+        for(int i = 0; i < allRegsForFuncRParams.size(); i++){
+          if(i!=0){
+            str0+=", ";
+          }
+          str0 += allRegsForFuncRParams[i];
+        }
+        str0 += ")\n";
       }
-      
-      if(son.size()>0){
-        son[0]->Dump(str0);
-      }
-      str0 += ")\n";
       return regForFun;
 
     }else if(son[0]->type == _PrimaryExp)
@@ -900,7 +933,10 @@ class MulExp : public BaseAST {
           str0 += "mul";
         }else if(son[i]->op == '/')
         {
-          val = son[0]->val / son[i+1]->val;
+          if(son[i+1]->val != 0){
+            val = son[0]->val / son[i+1]->val;
+          }
+          
           str0 += "div";
         }else if(son[i]->op == '%')
         {
@@ -1244,7 +1280,7 @@ class Decl: public BaseAST {
   }
   
   void Dump(std::string& str0) const override {
-   
+    son[0]->Dump(str0);
   }
   std::string retvaltmp(std::string& str0) override  {
     son[0]->retvaltmp(str0);
@@ -1261,7 +1297,10 @@ class ConstDecl: public BaseAST {
   }
   
   void Dump(std::string& str0) const override {
-   
+    std::cout<<"ConstDecl"<<std::endl;
+    for(int i = 1; i < son.size(); i++){
+      son[i]->retvaltmp(str0);
+    }
   }
   std::string retvaltmp(std::string& str0) override  {
     std::cout<<"ConstDecl"<<std::endl;
@@ -1326,6 +1365,7 @@ class ConstDef: public BaseAST {
     std::cout<<ident<<std::endl;
     std::cout<<constinitval<<std::endl;
     std::string tmpident = '@'+ident + '_' + std::to_string(symcnt);
+    std::cout<<"CONST_DEF_TMPIDENT"<<tmpident<<std::endl;
     (*cur_table)[tmpident] = constinitval;
     return "";
   }
@@ -1431,7 +1471,10 @@ class VarDecl: public BaseAST {
   }
   
   void Dump(std::string& str0) const override {
-   
+    std::cout<<"GLOBAL VarDecl"<<std::endl;
+    if(son[1]->type == _VarDef_dup){
+      son[1]->Dump(str0);
+    }
   }
   std::string retvaltmp(std::string& str0) override  {
     std::cout<<"VarDecl"<<std::endl;
@@ -1452,7 +1495,10 @@ class VarDef_dup: public BaseAST {
   }
   
   void Dump(std::string& str0) const override {
-   
+    std::cout<<"VarDef_dup"<<std::endl;
+    for(int i = 0; i < son.size(); i++){
+      son[i]->Dump(str0);
+    }
   }
   std::string retvaltmp(std::string& str0) override  {
     std::cout<<"VarDef_dup"<<std::endl;
@@ -1474,6 +1520,25 @@ class VarDef: public BaseAST {
   std::string ident;
   int initval;
   void Dump(std::string& str0) const override {
+    std::cout<<"GLOBAL VarDef"<<std::endl;
+    std::string tmp;
+
+    tmp = '@' + ident + '_' + std::to_string(symcnt);
+
+    str0 += "global "+tmp+" = alloc i32, ";
+
+    if(son.size() > 0){
+      std::string globalVarExp = son[0]->retvaltmp(str0);
+      str0 += globalVarExp+'\n';
+      (*cur_table)[tmp] = globalVarExp;
+      value_table[tmp] = son[0]->val;
+    }
+    else{
+      str0 += "zeroinit\n";
+      (*cur_table)[tmp] = std::to_string(initval);
+      value_table[tmp] = 0;
+    }
+    var_table[tmp] = "used";
    
   }
   std::string retvaltmp(std::string& str0) override  {
