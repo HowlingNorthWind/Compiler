@@ -530,42 +530,54 @@ class UnaryExp : public BaseAST {
     if(is_ident == true){
       std::string regForFun;
       if(funcTable[ident] == "int"){
+        std::cout<<"UNARY FUNC INT"<<std::endl;
         regForFun = '%'+std::to_string(tmpcnt);
         tmpcnt++;
-        int numForRParams = son[0]->son.size();
-        std::vector<std::string> allRegsForFuncRParams;
-        for(int i = 0; i < numForRParams; i++){
-          std::string regForFuncRParam = son[0]->son[i]->retvaltmp(str0);
-          allRegsForFuncRParams.push_back(regForFuncRParam);
-        }
-
-        str0 += " "+regForFun+" = call @"+ident+"(";
-        for(int i = 0; i < allRegsForFuncRParams.size(); i++){
-          if(i!=0){
-            str0+=", ";
+        if(son.size()>0){
+          int numForRParams = son[0]->son.size();
+          std::vector<std::string> allRegsForFuncRParams;
+          for(int i = 0; i < numForRParams; i++){
+            std::string regForFuncRParam = son[0]->son[i]->retvaltmp(str0);
+            allRegsForFuncRParams.push_back(regForFuncRParam);
           }
-          str0 += allRegsForFuncRParams[i];
+
+          str0 += " "+regForFun+" = call @"+ident+"(";
+          for(int i = 0; i < allRegsForFuncRParams.size(); i++){
+            if(i!=0){
+              str0+=", ";
+            }
+            str0 += allRegsForFuncRParams[i];
+          }
+          str0 += ")\n";
+        }else if(son.size() == 0){
+          str0 += " "+regForFun+" = call @"+ident+"()\n";
         }
-        str0 += ")\n";
+        
       }else if(funcTable[ident] == "void"){
         regForFun = "";
         
-        int numForRParams = son[0]->son.size();
-        std::vector<std::string> allRegsForFuncRParams;
-        for(int i = 0; i < numForRParams; i++){
-          std::string regForFuncRParam = son[0]->son[i]->retvaltmp(str0);
-          allRegsForFuncRParams.push_back(regForFuncRParam);
-        }
-
-
-        str0 += " call @"+ident+'(';
-        for(int i = 0; i < allRegsForFuncRParams.size(); i++){
-          if(i!=0){
-            str0+=", ";
+        if(son.size()>0){
+          int numForRParams = son[0]->son.size();
+          std::vector<std::string> allRegsForFuncRParams;
+          for(int i = 0; i < numForRParams; i++){
+            std::string regForFuncRParam = son[0]->son[i]->retvaltmp(str0);
+            allRegsForFuncRParams.push_back(regForFuncRParam);
           }
-          str0 += allRegsForFuncRParams[i];
+
+
+          str0 += " call @"+ident+'(';
+          for(int i = 0; i < allRegsForFuncRParams.size(); i++){
+            if(i!=0){
+              str0+=", ";
+            }
+            str0 += allRegsForFuncRParams[i];
+          }
+          str0 += ")\n";
+        }else if(son.size() == 0){
+          str0 += " call @"+ident+"()\n";
         }
-        str0 += ")\n";
+
+        
       }
       return regForFun;
 
