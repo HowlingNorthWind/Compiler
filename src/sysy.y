@@ -46,7 +46,7 @@ int cnt = 0;
 %token <ast_val> LE GE EQ NE AND OR LT GT
 
 // 非终结符的类型定义
-%type <ast_val> FuncDef FuncType Block Stmt Exp PrimaryExp Number UnaryExp UnaryOp MulExp AddExp
+%type <ast_val> FuncDef Block Stmt Exp PrimaryExp Number UnaryExp UnaryOp MulExp AddExp
 %type <ast_val> RelExp EqExp LAndExp LOrExp  Decl ConstDecl ConstDef_dup BType
 %type <ast_val> ConstDef BlockItem_dup BlockItem LVal ConstExp ConstInitVal
 %type <ast_val> VarDecl VarDef_dup VarDef InitVal
@@ -277,23 +277,23 @@ FuncDef
   ;
 
 // 同上, 不再解释
-FuncType
-  : INT {
-    auto ast = new FuncTypeAST();
-    string str = "int";
-    ast->func_type_str = str;
-    ast->func_type_all = str;
-    // ast->son.push_back($1);
-    $$ = ast;
-  }
-  | VOID {
-    auto ast = new FuncTypeAST();
-    string str = "void";
-    ast->func_type_str = str;
-    ast->func_type_all = str;
-    $$ = ast;
-  }
-  ;
+// FuncType
+//   : INT {
+//     auto ast = new FuncTypeAST();
+//     string str = "int";
+//     ast->func_type_str = str;
+//     ast->func_type_all = str;
+//     // ast->son.push_back($1);
+//     $$ = ast;
+//   }
+//   | VOID {
+//     auto ast = new FuncTypeAST();
+//     string str = "void";
+//     ast->func_type_str = str;
+//     ast->func_type_all = str;
+//     $$ = ast;
+//   }
+//   ;
 
 FuncFParams
   : FuncFParam {

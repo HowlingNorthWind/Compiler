@@ -37,6 +37,14 @@ map<string, string> funcTable;
 map<string, variant<int, string>> *cur_table;
 map<map<string, variant<int, string>>*,map<string, variant<int, string>>*> total_table;
 
+
+
+
+
+map<koopa_raw_value_t, int> stackForInsts;
+map<koopa_raw_function_t, int> mapFuncToSp;
+koopa_raw_function_t curFunc;
+string strForRISCV;
 // 函数声明略
 // ...
 void Visit(const koopa_raw_program_t &program);
@@ -47,12 +55,45 @@ void Visit(const koopa_raw_value_t &value);
 void Visit(const koopa_raw_return_t &ret);
 void Visit(const koopa_raw_integer_t &integer);
 void Visit(const koopa_raw_binary_t &binary);
+void Visit(const koopa_raw_store_t &rawStore);
+void Visit(const koopa_raw_load_t &load);
+
+int retValue(const koopa_raw_value_t &rawValue);
+int retValue(const koopa_raw_integer_t &rawInterger);
+
+void myEpilogue(const koopa_raw_function_t &func);
+void myPrologue(const koopa_raw_function_t &func);
+
+void writeTo(const koopa_raw_value_t &value){
+  cout<<"raw_Value"<<endl;
+  cout<<value<<endl;
+  if(stackForInsts.find(value) == stackForInsts.end()){
+    assert(false);
+  }
+  strForRISCV += " sw t0, "+to_string(stackForInsts[value])+"(sp)\n";
+  strForRISCV += "\n";
+  cout<<strForRISCV<<endl;
+}
+
+void readFrom(const koopa_raw_value_t &value, string destReg){
+  // auto instType = value->ty->tag;
+  if(stackForInsts.find(value) != stackForInsts.end()){
+    strForRISCV += " lw "+destReg+", "+ to_string(stackForInsts[value]) + "(sp)" + "\n";
+    cout<<strForRISCV<<endl;
+  }else{
+    strForRISCV += " li "+destReg+", "+ to_string(value->kind.data.integer.value) + "\n";
+    cout<<strForRISCV<<endl;
+  }
+}
+
 // 访问 raw program
 void Visit(const koopa_raw_program_t &program) {
   // 执行一些其他的必要操作
+  strForRISCV = "";
   cout<<"  .text "<<endl;
-  fprintf(yyout, "  .text ");
-  fprintf(yyout, "\n");
+  strForRISCV += "  .text \n";
+  // fprintf(yyout, "  .text ");
+  // fprintf(yyout, "\n");
   for (size_t i = 0; i < program.values.len; ++i) {
   // 正常情况下, 列表中的元素就是变量, 我们只不过是在确认这个事实
   // 当然, 你也可以基于 raw slice 的 kind, 实现一个通用的处理函数
@@ -62,40 +103,42 @@ void Visit(const koopa_raw_program_t &program) {
 
   // 进一步处理全局变量
   cout<<value->name<<endl;
-  fprintf(yyout,"%s", value->name);
-  fprintf(yyout, "\n");
-}
+  strForRISCV += value->name;
+  strForRISCV += "\n";
+  // fprintf(yyout,"%s", value->name);
+  // fprintf(yyout, "\n");
+  }
   cout<<"  .global ";
-  fprintf(yyout, "  .global ");
+  strForRISCV += "  .global ";
+  // fprintf(yyout, "  .global ");
+
   for (size_t i = 0; i < program.funcs.len; ++i) {
   // 正常情况下, 列表中的元素就是函数, 我们只不过是在确认这个事实
   // 当然, 你也可以基于 raw slice 的 kind, 实现一个通用的处理函数
-  assert(program.funcs.kind == KOOPA_RSIK_FUNCTION);
-  // 获取当前函数
-  koopa_raw_function_t func = (koopa_raw_function_t) program.funcs.buffer[i];
+    assert(program.funcs.kind == KOOPA_RSIK_FUNCTION);
+    // 获取当前函数
+    koopa_raw_function_t func = (koopa_raw_function_t) program.funcs.buffer[i];
 
-  // 进一步处理当前函数
-  //cout<<func->name<<endl;
-  for(int i = 1; i < strlen(func->name);i++)
-  {
-    char c = func->name[i]; 
-    cout<<c;
-    fprintf(yyout, "%c",c);
+    // 进一步处理当前函数
+    //cout<<func->name<<endl;
+    for(int i = 1; i < strlen(func->name);i++)
+    {
+      char c = func->name[i]; 
+      // cout<<c;
+      // fprintf(yyout, "%c",c);
+      strForRISCV += c;
+    }
+    // fprintf(yyout, "%s",func->name);
+    // cout<<endl;
+    strForRISCV += "\n";
+    // fprintf(yyout, "\n");
   }
-  // fprintf(yyout, "%s",func->name);
-  cout<<endl;
-  fprintf(yyout, "\n");
-}
-  // ...
-  // cout<<"  .text "<<endl;
-  // cout<<"  .global main"<<endl;
-  // cout<<"main:"<<endl;
-  // cout<<"  li a0, 0"<<endl;
-  // cout<<"  ret   "<<endl;
   // 访问所有全局变量
   Visit(program.values);
   // 访问所有函数
   Visit(program.funcs);
+
+  fprintf(yyout, "%s", strForRISCV.c_str());
 }
 
 // 访问 raw slice
@@ -130,16 +173,49 @@ void Visit(const koopa_raw_function_t &func) {
   for(int i = 1; i < strlen(func->name);i++)
   {
     char c = func->name[i]; 
-    cout<<c;
-    fprintf(yyout, "%c",c);
+    strForRISCV += c;
   }
-  cout<<":"<<endl;
-  fprintf(yyout, ":");
-  fprintf(yyout, "\n");
+  
+  strForRISCV += ":\n";
   // 访问所有基本块
+  Visit(func->params);
+
+  
+  int lenForBbs = func->bbs.len;
+  cout<<"lenForBbs "<<lenForBbs<<endl;
+  int spForEachInst = 0;
+  for(int i = 0; i < lenForBbs; i++){
+      auto ptr = func->bbs.buffer[i];
+      koopa_raw_basic_block_t funcBb = reinterpret_cast<koopa_raw_basic_block_t>(ptr);
+      int lenForInsts = funcBb->insts.len;
+      for(int j = 0; j < lenForInsts; j++){
+        auto ptr = funcBb->insts.buffer[j];
+        koopa_raw_value_t bbInst = reinterpret_cast<koopa_raw_value_t>(ptr);
+        if(bbInst->ty->tag != KOOPA_RTT_UNIT){
+          cout<<"AAAAAAAAAAAAAAA"<<endl;
+          cout<<spForEachInst<<endl;
+          cout<<bbInst<<endl;
+          stackForInsts[bbInst] = spForEachInst;
+          spForEachInst += 4;
+        }
+        
+      }
+  }
+  mapFuncToSp[func] = spForEachInst;
+  koopa_raw_function_t prevFunc = curFunc;
+  curFunc = func;
+  myPrologue(curFunc);
   Visit(func->bbs);
+  curFunc = prevFunc;
+  cout<<strForRISCV<<endl;
 }
 
+void myPrologue(const koopa_raw_function_t &func){
+  int sp = mapFuncToSp[func];
+  if(sp != 0){
+      strForRISCV += " addi sp, sp, " + to_string(-sp) + "\n";
+  }
+}
 // 访问基本块
 void Visit(const koopa_raw_basic_block_t &bb) {
   // 执行一些其他的必要操作
@@ -152,6 +228,7 @@ void Visit(const koopa_raw_basic_block_t &bb) {
 void Visit(const koopa_raw_value_t &value) {
   // 根据指令类型判断后续需要如何访问
   const auto &kind = value->kind;
+  cout<<kind.tag<<endl;
   switch (kind.tag) {
     case KOOPA_RVT_RETURN:
       // 访问 return 指令
@@ -161,11 +238,26 @@ void Visit(const koopa_raw_value_t &value) {
       // 访问 integer 指令
       Visit(kind.data.integer);
       break;
+    case KOOPA_RVT_STORE:
+      // 访问 integer 指令
+      cout<<"KOOPA_RVT_STORE"<<endl;
+      Visit(kind.data.store);
+      // writeTo(value);
+      break;
+    case KOOPA_RVT_LOAD:
+      Visit(kind.data.load);
+      writeTo(value);
+      break;
     case KOOPA_RVT_BINARY:
-
-      cout<<"KOOPA_RVT_BINARY"<<endl;
+      // cout<<"KOOPA_RVT_BINARY"<<endl;
       Visit(kind.data.binary);
-    
+      writeTo(value);
+      break;
+    case KOOPA_RVT_ALLOC:
+
+      cout<<"KOOPA_RVT_ALLOC"<<endl;
+      
+      break;
     default:
       // 其他类型暂时遇不到
       assert(false);
@@ -177,50 +269,142 @@ void Visit(const koopa_raw_value_t &value) {
 // ...
 
 void Visit(const koopa_raw_return_t &ret) {
-
-  cout<<"li a0, ";
-  cout<<ret.value->kind.data.integer.value<<endl;
-  cout<<"ret"<<endl;
-
-  fprintf(yyout,"li a0, ");
-  fprintf(yyout, "%d",ret.value->kind.data.integer.value);
-  fprintf(yyout, "\n");
-  fprintf(yyout, "ret");
-  fprintf(yyout, "\n");
+  
+  if(stackForInsts.find(ret.value)!= stackForInsts.end() ){
+    strForRISCV += " lw a0, ";
+    strForRISCV += to_string(stackForInsts[ret.value]);
+    strForRISCV += "(sp)\n";
+  }else{
+    strForRISCV += " li a0, ";
+    strForRISCV += to_string(ret.value->kind.data.integer.value);
+    strForRISCV += "\n";
+  }
+  
+  myEpilogue(curFunc);
+  strForRISCV += " ret\n";
+  // strForRISCV += " ret\n";
 }
 
+void myEpilogue(const koopa_raw_function_t &func){
+  int sp = mapFuncToSp[func];
+  if(sp == 0){
+
+  }else{
+     strForRISCV += " addi sp, sp, " + to_string(mapFuncToSp[func]) + "\n";
+  }
+}
 
 void Visit(const koopa_raw_binary_t &binary) {
+  // const auto leftValue = retValue(binary.lhs);
+  // const auto rightValue = retValue(binary.rhs);
+  // cout<<"leftValue "<<leftValue<<endl;
+  // cout<<"rightValue "<<rightValue<<endl;
+
+  readFrom(binary.lhs, "t0");
+  readFrom(binary.rhs, "t1");
+
   switch (binary.op) {
     case KOOPA_RBO_EQ:
-      // 访问 return 指令
-      
+      strForRISCV += " xor t0, t0, t1\n";
+      strForRISCV += " seqz t0, t0\n";
       break;
+    case KOOPA_RBO_NOT_EQ:
+      strForRISCV += " xor t0, t0, t1\n";
+      strForRISCV += " snez t0, t0\n";
+      break;
+    case KOOPA_RBO_GT:
+      strForRISCV += " sgt t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_LT:
+      strForRISCV += " slt t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_GE:
+      strForRISCV += " slt t0, t0, t1\n";
+      strForRISCV += " seqz t0, t0\n";
+      break;
+    case KOOPA_RBO_LE:
+      strForRISCV += " sgt t0, t0, t1\n";
+      strForRISCV += " seqz t0, t0\n";
+      break;
+    case KOOPA_RBO_SUB:
+      strForRISCV += " sub t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_ADD:
+      strForRISCV += " add t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_MUL:
+      strForRISCV += " mul t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_DIV:
+      strForRISCV += " div t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_MOD:
+      strForRISCV += " rem t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_AND:
+      strForRISCV += " and t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_OR:
+      strForRISCV += " or t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_XOR:
+      strForRISCV += " xor t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_SHL:
+      strForRISCV += " sll t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_SHR:
+      strForRISCV += " srl t0, t0, t1\n";
+      break;
+    case KOOPA_RBO_SAR:
+      strForRISCV += " sra t0, t0, t1\n";
+      break;
+    default:
+      assert(false);
+  }
+  // cout<<"op"<<binary.op<<endl;
+  // cout<<binary.lhs->ty->tag<<endl;
+  // cout<<"binary.rhs"<<endl;
+  // cout<<binary.rhs->kind.data.integer.value<<endl;
+  // std::string tmp1,tmp2,tmp3;
+  // tmp1 = "t" + std::to_string(cnt0);
+  // cnt0++;
+  // cout<<tmp1<<endl;
+  
+}
+
+void Visit(const koopa_raw_store_t &rawStore) {
+  // cout<<"rawStore"<<endl;
+  // cout<<rawStore.dest->kind.tag<<endl;
+  // cout<<rawStore.value->kind.tag<<endl;
+  readFrom(rawStore.value, "t0");
+  writeTo(rawStore.dest);
+}
+
+void Visit(const koopa_raw_load_t &load) {
+  readFrom(load.src, "t0");
+}
+
+void Visit(const koopa_raw_integer_t &integer) {
+  cout<<integer.value<<endl;
+}
+
+int retValue(const koopa_raw_value_t &rawValue){
+  const auto &kind = rawValue->kind;
+  switch (kind.tag) {
     case KOOPA_RVT_INTEGER:
       // 访问 integer 指令
-      
+      return retValue(kind.data.integer);
       break;
-    case KOOPA_RVT_BINARY:
-
-     
     default:
       // 其他类型暂时遇不到
       assert(false);
   }
-  cout<<"op"<<binary.op<<endl;
-  cout<<binary.lhs->ty->tag<<endl;
-  cout<<"binary.rhs"<<endl;
-  cout<<binary.rhs->kind.data.integer.value<<endl;
-  std::string tmp1,tmp2,tmp3;
-  tmp1 = "t" + std::to_string(cnt0);
-  cnt0++;
-  cout<<tmp1<<endl;
-  
 }
 
 
-void Visit(const koopa_raw_integer_t &integer) {
-  cout<<integer.value<<endl;
+int retValue(const koopa_raw_integer_t &rawInterger){
+  return rawInterger.value;
 }
 
 

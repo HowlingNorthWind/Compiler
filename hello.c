@@ -1,10 +1,4 @@
 int main() {
-  int x = getint();
-  int y = getint();
-  putint(x + y);
-  int c = getch();
-  putch(c);
-  putch(33);
-  putch(10);
-  return 0;
+  int x = 1, y = 2, z = 3;
+  return x + y + z;
 }
