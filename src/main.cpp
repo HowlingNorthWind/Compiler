@@ -57,6 +57,8 @@ void Visit(const koopa_raw_integer_t &integer);
 void Visit(const koopa_raw_binary_t &binary);
 void Visit(const koopa_raw_store_t &rawStore);
 void Visit(const koopa_raw_load_t &load);
+void Visit(const koopa_raw_jump_t &jump);
+void Visit(const koopa_raw_branch_t &branch) ;
 
 int retValue(const koopa_raw_value_t &rawValue);
 int retValue(const koopa_raw_integer_t &rawInterger);
@@ -221,6 +223,9 @@ void Visit(const koopa_raw_basic_block_t &bb) {
   // 执行一些其他的必要操作
   // ...
   // 访问所有指令
+  string bbLabel = bb->name;
+  bbLabel.erase(0,1);
+  strForRISCV += bbLabel+":\n";
   Visit(bb->insts);
 }
 
@@ -258,6 +263,12 @@ void Visit(const koopa_raw_value_t &value) {
       cout<<"KOOPA_RVT_ALLOC"<<endl;
       
       break;
+    case KOOPA_RVT_BRANCH:
+      Visit(kind.data.branch);
+      break;
+    case KOOPA_RVT_JUMP:
+      Visit(kind.data.jump);
+      break;
     default:
       // 其他类型暂时遇不到
       assert(false);
@@ -284,6 +295,26 @@ void Visit(const koopa_raw_return_t &ret) {
   strForRISCV += " ret\n";
   // strForRISCV += " ret\n";
 }
+
+
+
+void Visit(const koopa_raw_branch_t &branch) {
+  readFrom(branch.cond, "t0");
+  string trueLabel = branch.true_bb->name;
+  trueLabel.erase(0,1);
+  strForRISCV += " bnez t0, "+trueLabel+"\n";
+  string falseLabel = branch.false_bb->name; 
+  falseLabel.erase(0,1);
+  strForRISCV += " j "+falseLabel+"\n";
+ 
+}
+
+void Visit(const koopa_raw_jump_t &jump) {
+ string targetLabel = jump.target->name;
+ targetLabel.erase(0,1);
+ strForRISCV += " j "+targetLabel+"\n";
+}
+
 
 void myEpilogue(const koopa_raw_function_t &func){
   int sp = mapFuncToSp[func];
