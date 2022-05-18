@@ -1,7 +1,26 @@
-int main() {
-  int a = 2;
-  if (a) {
-    a = a + 1;
-  } else a = 0;  // 在实际写 C/C++ 程序的时候别这样, 建议 if 的分支全部带大括号
+
+int a = 10;
+
+int inc() {
+  a = a + 1;
   return a;
+}
+
+void print_a() {
+  putint(a);
+  putch(10);
+}
+
+int main() {
+  int i = 0;
+  while (i < 10) {
+    inc();
+    int a = 1;
+    a = a + 2;
+    putint(a);
+    putch(10);
+    print_a();
+    i = i + 1;
+  }
+  return 0;
 }

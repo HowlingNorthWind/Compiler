@@ -43,6 +43,7 @@ map<map<string, variant<int, string>>*,map<string, variant<int, string>>*> total
 
 map<koopa_raw_value_t, int> stackForInsts;
 map<koopa_raw_function_t, int> mapFuncToSp;
+map<koopa_raw_function_t, int> mapFuncToRa;
 koopa_raw_function_t curFunc;
 string strForRISCV;
 // 函数声明略
@@ -58,7 +59,11 @@ void Visit(const koopa_raw_binary_t &binary);
 void Visit(const koopa_raw_store_t &rawStore);
 void Visit(const koopa_raw_load_t &load);
 void Visit(const koopa_raw_jump_t &jump);
-void Visit(const koopa_raw_branch_t &branch) ;
+void Visit(const koopa_raw_branch_t &branch);
+void Visit(const koopa_raw_call_t &call);
+void Visit(const koopa_raw_func_arg_ref_t &funcArgRef);
+void Visit(const koopa_raw_global_alloc_t &myGlobalAlloc);
+
 
 int retValue(const koopa_raw_value_t &rawValue);
 int retValue(const koopa_raw_integer_t &rawInterger);
@@ -66,15 +71,25 @@ int retValue(const koopa_raw_integer_t &rawInterger);
 void myEpilogue(const koopa_raw_function_t &func);
 void myPrologue(const koopa_raw_function_t &func);
 
-void writeTo(const koopa_raw_value_t &value){
+void myPrintGlobalVar(const koopa_raw_value_t &value);
+
+void writeTo(const koopa_raw_value_t &value, string srcReg){
   cout<<"raw_Value"<<endl;
   cout<<value<<endl;
   if(stackForInsts.find(value) == stackForInsts.end()){
-    assert(false);
+    // assert(false);
+    if(value->kind.tag == KOOPA_RVT_GLOBAL_ALLOC){
+      string myGlobalName = value->name;
+      myGlobalName.erase(0,1);
+      strForRISCV += " la t1, " + myGlobalName + "\n";
+      strForRISCV += " sw t0, 0(t1)\n";
+    }
+  }else{
+      strForRISCV += " sw "+srcReg+", "+to_string(stackForInsts[value])+"(sp)\n";
+      strForRISCV += "\n";
+      cout<<strForRISCV<<endl;
   }
-  strForRISCV += " sw t0, "+to_string(stackForInsts[value])+"(sp)\n";
-  strForRISCV += "\n";
-  cout<<strForRISCV<<endl;
+  
 }
 
 void readFrom(const koopa_raw_value_t &value, string destReg){
@@ -82,9 +97,17 @@ void readFrom(const koopa_raw_value_t &value, string destReg){
   if(stackForInsts.find(value) != stackForInsts.end()){
     strForRISCV += " lw "+destReg+", "+ to_string(stackForInsts[value]) + "(sp)" + "\n";
     cout<<strForRISCV<<endl;
-  }else{
+  }else if(value->kind.tag == KOOPA_RVT_INTEGER){
     strForRISCV += " li "+destReg+", "+ to_string(value->kind.data.integer.value) + "\n";
     cout<<strForRISCV<<endl;
+  }else if(value->kind.tag == KOOPA_RVT_GLOBAL_ALLOC){
+    string myGlobalName = value->name;
+    myGlobalName.erase(0,1);
+    strForRISCV += " la " + destReg + ", " + myGlobalName + "\n";
+    strForRISCV += " lw " + destReg + ", 0("+destReg+")\n";
+  }else{
+    cout<<"readFrom"<<value->kind.tag<<endl;
+    assert(false);
   }
 }
 
@@ -92,8 +115,8 @@ void readFrom(const koopa_raw_value_t &value, string destReg){
 void Visit(const koopa_raw_program_t &program) {
   // 执行一些其他的必要操作
   strForRISCV = "";
-  cout<<"  .text "<<endl;
-  strForRISCV += "  .text \n";
+  // cout<<"  .text "<<endl;
+  // strForRISCV += "  .text \n";
   // fprintf(yyout, "  .text ");
   // fprintf(yyout, "\n");
   for (size_t i = 0; i < program.values.len; ++i) {
@@ -101,17 +124,17 @@ void Visit(const koopa_raw_program_t &program) {
   // 当然, 你也可以基于 raw slice 的 kind, 实现一个通用的处理函数
   assert(program.values.kind == KOOPA_RSIK_VALUE);
   // 获取当前变量
-  koopa_raw_function_t value = (koopa_raw_function_t) program.values.buffer[i];
+  // koopa_raw_function_t value = (koopa_raw_function_t) program.values.buffer[i];
 
   // 进一步处理全局变量
-  cout<<value->name<<endl;
-  strForRISCV += value->name;
-  strForRISCV += "\n";
+  // cout<<value->name<<endl;
+  // strForRISCV += value->name;
+  // strForRISCV += "\n";
   // fprintf(yyout,"%s", value->name);
   // fprintf(yyout, "\n");
   }
-  cout<<"  .global ";
-  strForRISCV += "  .global ";
+  // cout<<"  .global ";
+  // strForRISCV += "  .global ";
   // fprintf(yyout, "  .global ");
 
   for (size_t i = 0; i < program.funcs.len; ++i) {
@@ -119,20 +142,20 @@ void Visit(const koopa_raw_program_t &program) {
   // 当然, 你也可以基于 raw slice 的 kind, 实现一个通用的处理函数
     assert(program.funcs.kind == KOOPA_RSIK_FUNCTION);
     // 获取当前函数
-    koopa_raw_function_t func = (koopa_raw_function_t) program.funcs.buffer[i];
+    // koopa_raw_function_t func = (koopa_raw_function_t) program.funcs.buffer[i];
 
     // 进一步处理当前函数
     //cout<<func->name<<endl;
-    for(int i = 1; i < strlen(func->name);i++)
-    {
-      char c = func->name[i]; 
-      // cout<<c;
-      // fprintf(yyout, "%c",c);
-      strForRISCV += c;
-    }
-    // fprintf(yyout, "%s",func->name);
-    // cout<<endl;
-    strForRISCV += "\n";
+    // for(int i = 1; i < strlen(func->name);i++)
+    // {
+    //   char c = func->name[i]; 
+    //   // cout<<c;
+    //   // fprintf(yyout, "%c",c);
+    //   strForRISCV += c;
+    // }
+    // // fprintf(yyout, "%s",func->name);
+    // // cout<<endl;
+    // strForRISCV += "\n";
     // fprintf(yyout, "\n");
   }
   // 访问所有全局变量
@@ -151,7 +174,9 @@ void Visit(const koopa_raw_slice_t &slice) {
     switch (slice.kind) {
       case KOOPA_RSIK_FUNCTION:
         // 访问函数
-        Visit(reinterpret_cast<koopa_raw_function_t>(ptr));
+        if(reinterpret_cast<koopa_raw_function_t>(ptr)->bbs.len != 0){
+          Visit(reinterpret_cast<koopa_raw_function_t>(ptr));
+        }
         break;
       case KOOPA_RSIK_BASIC_BLOCK:
         // 访问基本块
@@ -172,12 +197,12 @@ void Visit(const koopa_raw_slice_t &slice) {
 void Visit(const koopa_raw_function_t &func) {
   // 执行一些其他的必要操作
   // ...
-  for(int i = 1; i < strlen(func->name);i++)
-  {
-    char c = func->name[i]; 
-    strForRISCV += c;
-  }
-  
+  strForRISCV += "  .text \n";
+  strForRISCV += "  .global ";
+  string funcName = func->name;
+  funcName.erase(0,1);
+  strForRISCV += funcName+"\n";
+  strForRISCV += funcName;
   strForRISCV += ":\n";
   // 访问所有基本块
   Visit(func->params);
@@ -186,6 +211,9 @@ void Visit(const koopa_raw_function_t &func) {
   int lenForBbs = func->bbs.len;
   cout<<"lenForBbs "<<lenForBbs<<endl;
   int spForEachInst = 0;
+  int spForRa = 0;
+  int spForFuncParams = 0;
+  int maxLenForArgs = 0;
   for(int i = 0; i < lenForBbs; i++){
       auto ptr = func->bbs.buffer[i];
       koopa_raw_basic_block_t funcBb = reinterpret_cast<koopa_raw_basic_block_t>(ptr);
@@ -194,16 +222,42 @@ void Visit(const koopa_raw_function_t &func) {
         auto ptr = funcBb->insts.buffer[j];
         koopa_raw_value_t bbInst = reinterpret_cast<koopa_raw_value_t>(ptr);
         if(bbInst->ty->tag != KOOPA_RTT_UNIT){
-          cout<<"AAAAAAAAAAAAAAA"<<endl;
-          cout<<spForEachInst<<endl;
-          cout<<bbInst<<endl;
-          stackForInsts[bbInst] = spForEachInst;
+          // cout<<"AAAAAAAAAAAAAAA"<<endl;
+          // cout<<spForEachInst<<endl;
+          // cout<<bbInst<<endl;
+          // stackForInsts[bbInst] = spForEachInst;
           spForEachInst += 4;
         }
-        
+        if(bbInst->kind.tag == KOOPA_RVT_CALL){
+          if(spForRa == 0){
+            spForRa = 4;
+          }
+          koopa_raw_slice_t funcArgs = bbInst->kind.data.call.args;
+          int lenForFuncArgs = funcArgs.len;
+          maxLenForArgs = max(lenForFuncArgs, maxLenForArgs);
+        }
       }
   }
-  mapFuncToSp[func] = spForEachInst;
+  spForFuncParams = max(0, maxLenForArgs - 8)*4;
+  int spForAll = spForEachInst + spForFuncParams + spForRa;
+  spForAll = (spForAll + 15)/16*16;
+  mapFuncToSp[func] = spForAll;
+  mapFuncToRa[func] = spForRa;
+  int specialSpForEachInst = 0;
+  for(int i = 0; i < lenForBbs; i++){
+      auto ptr = func->bbs.buffer[i];
+      koopa_raw_basic_block_t funcBb = reinterpret_cast<koopa_raw_basic_block_t>(ptr);
+      int lenForInsts = funcBb->insts.len;
+      for(int j = 0; j < lenForInsts; j++){
+        auto ptr = funcBb->insts.buffer[j];
+        koopa_raw_value_t bbInst = reinterpret_cast<koopa_raw_value_t>(ptr);
+        if(bbInst->ty->tag != KOOPA_RTT_UNIT){
+          stackForInsts[bbInst] = spForFuncParams+specialSpForEachInst;
+          specialSpForEachInst += 4;
+        }
+      }
+  }
+  cout<<strForRISCV<<endl;
   koopa_raw_function_t prevFunc = curFunc;
   curFunc = func;
   myPrologue(curFunc);
@@ -214,10 +268,26 @@ void Visit(const koopa_raw_function_t &func) {
 
 void myPrologue(const koopa_raw_function_t &func){
   int sp = mapFuncToSp[func];
+  int ra = mapFuncToRa[func];
   if(sp != 0){
       strForRISCV += " addi sp, sp, " + to_string(-sp) + "\n";
+      if(ra != 0){
+        strForRISCV += " sw ra, "+to_string(sp-4) +"(sp)\n";
+      }
   }
 }
+
+void myEpilogue(const koopa_raw_function_t &func){
+  int sp = mapFuncToSp[func];
+  int ra = mapFuncToRa[func];
+  if(sp != 0){
+      if(ra != 0){
+        strForRISCV += " lw ra, "+to_string(sp-4) +"(sp)\n";
+      }
+      strForRISCV += " addi sp, sp, " + to_string(mapFuncToSp[func]) + "\n";   
+  }
+}
+
 // 访问基本块
 void Visit(const koopa_raw_basic_block_t &bb) {
   // 执行一些其他的必要操作
@@ -225,7 +295,9 @@ void Visit(const koopa_raw_basic_block_t &bb) {
   // 访问所有指令
   string bbLabel = bb->name;
   bbLabel.erase(0,1);
-  strForRISCV += bbLabel+":\n";
+  if(bbLabel != "entry"){
+    strForRISCV += bbLabel+":\n";
+  }
   Visit(bb->insts);
 }
 
@@ -251,12 +323,12 @@ void Visit(const koopa_raw_value_t &value) {
       break;
     case KOOPA_RVT_LOAD:
       Visit(kind.data.load);
-      writeTo(value);
+      writeTo(value, "t0");
       break;
     case KOOPA_RVT_BINARY:
       // cout<<"KOOPA_RVT_BINARY"<<endl;
       Visit(kind.data.binary);
-      writeTo(value);
+      writeTo(value, "t0");
       break;
     case KOOPA_RVT_ALLOC:
 
@@ -269,10 +341,32 @@ void Visit(const koopa_raw_value_t &value) {
     case KOOPA_RVT_JUMP:
       Visit(kind.data.jump);
       break;
+    case KOOPA_RVT_CALL:
+      Visit(kind.data.call);
+      writeTo(value, "a0");
+      break;
+    case KOOPA_RVT_FUNC_ARG_REF:
+      Visit(kind.data.func_arg_ref);
+      break;
+    case KOOPA_RVT_GLOBAL_ALLOC:
+      myPrintGlobalVar(value);
+      Visit(kind.data.global_alloc);
+      break;
+    case KOOPA_RVT_ZERO_INIT:
+      strForRISCV += " .zero 4\n";
+      break;
     default:
       // 其他类型暂时遇不到
       assert(false);
   }
+}
+
+void myPrintGlobalVar(const koopa_raw_value_t &value){
+  strForRISCV += " .data\n";
+  string myGlobalName = value->name;
+  myGlobalName.erase(0, 1);
+  strForRISCV += " .global "+myGlobalName+"\n";
+  strForRISCV += myGlobalName+":\n";
 }
 
 // 访问对应类型指令的函数定义略
@@ -280,8 +374,10 @@ void Visit(const koopa_raw_value_t &value) {
 // ...
 
 void Visit(const koopa_raw_return_t &ret) {
-  
-  if(stackForInsts.find(ret.value)!= stackForInsts.end() ){
+  // cout<<"Return "<<ret.value->ty->tag<<endl;
+  if(ret.value == NULL){
+
+  }else if(stackForInsts.find(ret.value)!= stackForInsts.end() ){
     strForRISCV += " lw a0, ";
     strForRISCV += to_string(stackForInsts[ret.value]);
     strForRISCV += "(sp)\n";
@@ -296,6 +392,43 @@ void Visit(const koopa_raw_return_t &ret) {
   // strForRISCV += " ret\n";
 }
 
+void Visit(const koopa_raw_call_t &call) {
+  auto callFuncArgs = call.args;
+  int lenForCallFuncArgs = callFuncArgs.len;
+  for(int i = 0; i < lenForCallFuncArgs; i++){
+    string destReg = "";
+    if(i<8){
+      destReg = "a"+to_string(i);
+      readFrom(reinterpret_cast<koopa_raw_value_t>(call.args.buffer[i]), destReg);
+    }else{
+      string destMem = to_string((i-8)*4)+"(sp)";
+      readFrom(reinterpret_cast<koopa_raw_value_t>(call.args.buffer[i]), "t0");
+      strForRISCV += "sw t0, "+destMem+"\n";
+    }
+    
+  }
+  string callFuncName = call.callee->name;
+  callFuncName.erase(0,1);
+  strForRISCV += " call " +callFuncName+"\n";
+
+}
+
+void Visit(const koopa_raw_func_arg_ref_t &funcArgRef) {
+  cout<<"Index"<<funcArgRef.index<<endl;
+}
+
+void Visit(const koopa_raw_global_alloc_t &myGlobalAlloc) {
+  cout<<myGlobalAlloc.init->kind.tag<<endl;
+  if(myGlobalAlloc.init->kind.tag == KOOPA_RVT_INTEGER){
+    strForRISCV += " .word "+to_string(myGlobalAlloc.init->kind.data.integer.value)+"\n";
+  }else if(myGlobalAlloc.init->kind.tag == KOOPA_RVT_ZERO_INIT){
+    Visit(myGlobalAlloc.init);
+  }else{
+    assert(false);
+  
+  }
+
+}
 
 
 void Visit(const koopa_raw_branch_t &branch) {
@@ -316,14 +449,7 @@ void Visit(const koopa_raw_jump_t &jump) {
 }
 
 
-void myEpilogue(const koopa_raw_function_t &func){
-  int sp = mapFuncToSp[func];
-  if(sp == 0){
 
-  }else{
-     strForRISCV += " addi sp, sp, " + to_string(mapFuncToSp[func]) + "\n";
-  }
-}
 
 void Visit(const koopa_raw_binary_t &binary) {
   // const auto leftValue = retValue(binary.lhs);
@@ -405,11 +531,29 @@ void Visit(const koopa_raw_binary_t &binary) {
 }
 
 void Visit(const koopa_raw_store_t &rawStore) {
-  // cout<<"rawStore"<<endl;
+  cout<<"rawStore"<<endl;
   // cout<<rawStore.dest->kind.tag<<endl;
-  // cout<<rawStore.value->kind.tag<<endl;
-  readFrom(rawStore.value, "t0");
-  writeTo(rawStore.dest);
+  cout<<rawStore.value->kind.tag<<endl;
+  if(rawStore.value->kind.tag == KOOPA_RVT_FUNC_ARG_REF){
+      int myIndex = rawStore.value->kind.data.func_arg_ref.index;
+      if(myIndex < 8){
+        writeTo(rawStore.dest, "a"+to_string(rawStore.value->kind.data.func_arg_ref.index));
+      }else{
+        int spNumForCalleeArgs = mapFuncToSp[curFunc] + (myIndex-8)*4;
+        // readFrom(to_string(spNumForCalleeArgs)+"(sp)","t0");
+        strForRISCV += " lw t0, "+to_string(spNumForCalleeArgs)+"(sp)\n";
+        writeTo(rawStore.dest, "t0");
+      }
+     
+  }else if(rawStore.dest->kind.tag == KOOPA_RVT_GLOBAL_ALLOC){
+      readFrom(rawStore.value, "t0");
+      writeTo(rawStore.dest, "t0");
+      // assert(false);
+  }else{
+      readFrom(rawStore.value, "t0");
+      writeTo(rawStore.dest, "t0");
+  }
+
 }
 
 void Visit(const koopa_raw_load_t &load) {
