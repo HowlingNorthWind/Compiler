@@ -1,26 +1,8 @@
-
-int a = 10;
-
-int inc() {
-  a = a + 1;
-  return a;
-}
-
-void print_a() {
-  putint(a);
-  putch(10);
-}
-
+const int arr[5][3] = {5};
+const int x = 3;
 int main() {
-  int i = 0;
-  while (i < 10) {
-    inc();
-    int a = 1;
-    a = a + 2;
-    putint(a);
-    putch(10);
-    print_a();
-    i = i + 1;
-  }
-  return 0;
+  const int a[2] = {1,2};
+  int arr6[5] ;
+  
+  return x;
 }

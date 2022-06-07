@@ -40,6 +40,7 @@
         "vector": "cpp",
         "variant": "cpp",
         "map": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "algorithm": "cpp"
     }
 }

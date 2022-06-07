@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 #include <variant>
+#include <algorithm>
+#include <assert.h>
 
 extern FILE *yyout;
 // 所有 AST 的基类
@@ -30,7 +32,7 @@ enum TYPE{
   _EqExp, _LAndExp, _LOrExp, _LE, _GE, _EQ, _NE, _AND, _OR, _LT, _GT, _Decl, 
   _ConstDecl, _ConstDef_dup, _BType, _ConstDef, _BlockItem_dup, _BlockItem,
   _LVal, _ConstExp, _ConstInitVal, _Stmt, _VarDecl, _VarDef_dup, _VarDef, 
-  _InitVal, _Block, 
+  _InitVal, _Block, _ConstNum, _LValNum, _InitVal_dup, _ConstInitVal_dup, 
 };
 
 class BaseAST {
@@ -48,13 +50,36 @@ class BaseAST {
   {
     return "";
   }
+  virtual std::vector<std::string> getInitValArray(std::vector<std::string>& resVec, std::vector<int>& dims, std::vector<int>& numsForDims, int allnum, std::string& str0)
+  {
+    
+    return resVec;
+  }
   std::vector<BaseAST *> son;
   TYPE type;
   int val;
   char op;
   bool isint = false;
   std::string func_type_all;
+  bool isArray;
 };
+
+
+class ConstNumAST: public BaseAST {
+  public:
+  ConstNumAST(){
+    type = _ConstNum;
+  };
+  std::vector<int> arrayVector;
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    return "";
+  }
+};
+
+
 
 // CompUnit 是 BaseAST
 class CompUnitAST : public BaseAST {
@@ -439,6 +464,7 @@ class StmtAST : public BaseAST {
       // *cur_table = tmp_table;
       if(tmpsymcnt == 0){
         std::cout<<"WRONG AT FIND IDENT"<<std::endl;
+        assert(false);
       }
 
       str0 += " store " + tmpexp + ", " + resident+'\n';
@@ -1321,7 +1347,7 @@ class ConstDecl: public BaseAST {
   void Dump(std::string& str0) const override {
     std::cout<<"ConstDecl"<<std::endl;
     for(int i = 1; i < son.size(); i++){
-      son[i]->retvaltmp(str0);
+      son[i]->Dump(str0);
     }
   }
   std::string retvaltmp(std::string& str0) override  {
@@ -1341,7 +1367,10 @@ class ConstDef_dup: public BaseAST {
   }
   
   void Dump(std::string& str0) const override {
-   
+    std::cout<<"ConstDef_dup"<<std::endl;
+    for(int i = 0; i < son.size(); i++){
+      son[i]->Dump(str0);
+    }
   }
   std::string retvaltmp(std::string& str0) override  {
     std::cout<<"ConstDef_dup"<<std::endl;
@@ -1378,20 +1407,216 @@ class ConstDef: public BaseAST {
   ConstDef(){
     type = _ConstDef;
   }
+  std::unique_ptr<BaseAST> constInitValAST;
+  std::unique_ptr<ConstNumAST> constNumAST;
   int constinitval;
   void Dump(std::string& str0) const override {
-   
+    if(isArray == false){
+      std::cout<<"ConstDef"<<std::endl;
+      std::cout<<ident<<std::endl;
+      std::cout<<constinitval<<std::endl;
+      std::string tmpident = '@'+ident + '_' + std::to_string(symcnt);
+      std::cout<<"CONST_DEF_TMPIDENT"<<tmpident<<std::endl;
+      (*cur_table)[tmpident] = constinitval;
+    }else if(isArray == true){
+
+      std::cout<<"GLOBAL ConstDef"<<std::endl;
+      std::string tmp;
+
+      tmp = '@' + ident + '_' + std::to_string(symcnt);
+      if(var_table.find(tmp) ==  var_table.end()){
+        str0 += "global " + tmp + " = alloc ";
+        int numOfArrayVector = constNumAST->arrayVector.size();
+        std::string tmpvecstr = "[i32, "+ std::to_string(constNumAST->arrayVector[numOfArrayVector - 1]) + "]";
+        for(int i = numOfArrayVector - 2; i >= 0; i--)
+        {
+          tmpvecstr = "[" + tmpvecstr +", "+std::to_string(constNumAST->arrayVector[i])+"]";
+        }
+        str0 += tmpvecstr;
+        var_table[tmp] = "used";
+      }
+
+      
+      std::vector<int> numForEachDim;
+      numForEachDim.push_back(1);
+      int mulRes = 1;
+      for(int i = constNumAST->arrayVector.size() - 1; i > 0; i--){
+        mulRes *= constNumAST->arrayVector[i];
+        numForEachDim.push_back(mulRes);
+      }
+      mulRes *= constNumAST->arrayVector[0];
+      reverse(numForEachDim.begin(), numForEachDim.end());
+
+      
+       if(son.size() > 0){
+        str0 += ", ";
+
+        std::vector<std::string> initValArray;
+        if(son[2]->son.size()>0){
+          if(son[2]->isArray == false){
+            assert(false);
+          }
+          son[2]->son[0]->getInitValArray(initValArray, constNumAST->arrayVector, numForEachDim, mulRes,str0);
+        }else{
+          for(int i = 0; i < mulRes; i++){
+            initValArray.push_back("0");
+          }
+        }
+
+        globalInitSearch(constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
+        str0 += "\n";
+
+        // std::cout<<"******************************************"<<std::endl;
+        // std::cout<<str0<<std::endl;
+        // assert(false);
+
+        (*cur_table)[tmp] = "initGlobalArray";
+        value_table[tmp] = 0;
+      }
+      else{
+        str0 += ", zeroinit\n";
+        (*cur_table)[tmp] = "initGlobalArray";
+        value_table[tmp] = 0;
+      }
+      var_table[tmp] = "used";
+    }
   }
   std::string retvaltmp(std::string& str0) override  {
-    std::cout<<"ConstDef"<<std::endl;
-    std::cout<<ident<<std::endl;
-    std::cout<<constinitval<<std::endl;
-    std::string tmpident = '@'+ident + '_' + std::to_string(symcnt);
-    std::cout<<"CONST_DEF_TMPIDENT"<<tmpident<<std::endl;
-    (*cur_table)[tmpident] = constinitval;
+    if(isArray == false){
+      std::cout<<"ConstDef"<<std::endl;
+      std::cout<<ident<<std::endl;
+      std::cout<<constinitval<<std::endl;
+      std::string tmpident = '@'+ident + '_' + std::to_string(symcnt);
+      std::cout<<"CONST_DEF_TMPIDENT"<<tmpident<<std::endl;
+      if(isArray == false){
+        (*cur_table)[tmpident] = constinitval;
+      }
+      return "";
+    }else if(isArray == true){
+      std::cout<<"ConstArrayDef"<<std::endl;
+      std::string tmp;
+      std::string tmp1;
+      // if(son.size()>0){
+      //   son[0]->retvaltmp(str0);
+      // }
+
+      tmp = '@' + ident + '_' + std::to_string(symcnt);
+      if(var_table.find(tmp) ==  var_table.end()){
+        str0 += " " + tmp + " = alloc ";
+        int numOfArrayVector = constNumAST->arrayVector.size();
+        std::string tmpvecstr = "[i32, "+ std::to_string(constNumAST->arrayVector[numOfArrayVector - 1]) + "]";
+        for(int i = numOfArrayVector - 2; i >= 0; i--)
+        {
+          tmpvecstr = "[" + tmpvecstr +", "+std::to_string(constNumAST->arrayVector[i])+"]";
+        }
+        str0 += tmpvecstr + '\n';
+        var_table[tmp] = "used";
+      }
+    
+      std::vector<int> numForEachDim;
+      numForEachDim.push_back(1);
+      int mulRes = 1;
+      for(int i = constNumAST->arrayVector.size() - 1; i > 0; i--){
+        mulRes *= constNumAST->arrayVector[i];
+        numForEachDim.push_back(mulRes);
+      }
+      mulRes *= constNumAST->arrayVector[0];
+      reverse(numForEachDim.begin(), numForEachDim.end());
+
+      // for(auto iter = numForEachDim.begin(); iter != numForEachDim.end(); iter++){
+      //   std::cout<<*iter<<std::endl;
+      // }
+
+      
+
+
+      std::cout<<"ConstArrayDEF  "<<tmp<<std::endl;
+      std::cout<<"SYMCNT  "<<symcnt<<std::endl;
+      if(son.size() > 0){
+        std::vector<std::string> initValArray;
+        if(son[2]->son.size()>0){
+          if(son[2]->isArray == false){
+            assert(false);
+          }
+          son[2]->son[0]->getInitValArray(initValArray, constNumAST->arrayVector, numForEachDim, mulRes,str0);
+        }else{
+          for(int i = 0; i < mulRes; i++){
+            initValArray.push_back("0");
+          }
+        }
+             // tmp1 = son[0]->retvaltmp(str0);
+        // str0 += " store " + tmp1 +", " + tmp+'\n';
+        // str0 += "\n";
+
+        for(auto iter = initValArray.begin(); iter != initValArray.end(); iter++){
+          std::cout<<*iter<<std::endl;
+        }
+
+        getElemPtr(tmp, constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
+        std::cout<<str0<<std::endl;
+        // assert(false);
+
+        (*cur_table)[tmp] = "initArray";
+        value_table[tmp] = 0;
+        // std::cout<<"INITVAL VARDEF ARRAY ONE"<<tmp1<<std::endl;
+        // std::cout<<str0<<std::endl;
+      }
+      else{
+        // str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
+        // str0 += "\n";
+        std::vector<std::string> initValArray;
+        for(int i = 0; i < mulRes; i++){
+          initValArray.push_back("0");
+        }
+        getElemPtr(tmp, constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
+        std::cout<<str0<<std::endl;
+        // assert(false);
+
+
+        (*cur_table)[tmp] = "initArray";
+        value_table[tmp] = 0;
+        // std::cout<<"INITVAL VARDEF TWO"<<std::to_string(initval)<<std::endl;
+        // std::cout<<str0<<std::endl;
+      }
+      
+    }
     return "";
   }
+
+  void getElemPtr(std::string ptrIdent,  std::vector<int>& dims, std::vector<int>& numsForDims, int curPtrIndex, std::string& str0, std::vector<std::string>& initArray, int initValIndex)
+  {
+    for(int i = 0; i < dims[curPtrIndex]; i++){
+      std::string regForPtr = '%'+std::to_string(tmpcnt);
+      tmpcnt++;
+      str0 += " "+regForPtr+" = getelemptr "+ptrIdent+", "+std::to_string(i)+"\n";
+      int tmpInitValIndex = initValIndex + numsForDims[curPtrIndex]*i;
+      if(curPtrIndex+1 == dims.size()){
+        str0 += " store "+initArray[tmpInitValIndex]+", "+regForPtr+"\n";
+      }else{
+        getElemPtr(regForPtr, dims, numsForDims, curPtrIndex+1, str0, initArray, tmpInitValIndex);
+      }
+    }
+  }
+  void globalInitSearch(std::vector<int>& dims, std::vector<int>& numsForDims, int curDimIndex, std::string& str0, std::vector<std::string>& initArray, int initValIndex) const
+  {
+    str0 += "{";
+    for(int i = 0; i < dims[curDimIndex]; i++){
+      if(i != 0){
+        str0 += ",";
+      }
+      int tmpInitValIndex = initValIndex + numsForDims[curDimIndex]*i;
+      if(curDimIndex + 1 == dims.size()){
+        str0 += initArray[tmpInitValIndex];
+      }else{
+        globalInitSearch(dims, numsForDims, curDimIndex+1, str0, initArray, tmpInitValIndex);
+      }
+
+    }
+    str0 += "}";
+  }
 };
+
+
 
 
 class BlockItem_dup: public BaseAST {
@@ -1454,6 +1679,23 @@ class LVal: public BaseAST {
 };
 
 
+
+class LValNum: public BaseAST {
+  public:
+  LValNum(){
+    type = _LValNum;
+  }
+  std::string ident;
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    return "";
+  }
+};
+
+
+
 class ConstExp: public BaseAST {
   public:
   ConstExp(){
@@ -1464,7 +1706,7 @@ class ConstExp: public BaseAST {
    
   }
   std::string retvaltmp(std::string& str0) override  {
-    return "";
+    return std::to_string(val);
   }
 };
 
@@ -1473,17 +1715,98 @@ class ConstInitVal: public BaseAST {
   ConstInitVal(){
     type = _ConstInitVal;
   }
-  
   void Dump(std::string& str0) const override {
    
   }
   std::string retvaltmp(std::string& str0) override  {
     return "";
   }
+  
+  std::vector<std::string> getInitValArray(std::vector<std::string>& resVec, std::vector<int>& dims, std::vector<int>& numsForDims, int allnum, std::string& str0) override
+  {
+    if(isArray == false){
+      std::string tmp = son[0]->retvaltmp(str0);
+      resVec.push_back(tmp);
+    }
+    if(son.size() == 0){
+      int curIndex = resVec.size();
+      std::vector<std::string> sonArrayVec;
+      int indexForSonArray = numsForDims.size();
+      int numsForZero = 0;
+      for(int i = 0; i < numsForDims.size(); i++){
+        if(curIndex%numsForDims[i]==0){
+          indexForSonArray = i;
+          numsForZero = numsForDims[i];
+          break;
+        }
+      }
+      if(indexForSonArray == numsForDims.size()){
+        assert(false);
+      }
+      for(int i = 0; i < numsForZero; i++){
+        resVec.push_back("0");
+      }
+
+    }else if(son.size() > 0){
+      int curIndex = resVec.size();
+      std::vector<std::string> sonArrayVec;
+      int indexForSonArray = numsForDims.size();
+      // int numsForZero = 0;
+      for(int i = 0; i < numsForDims.size(); i++){
+        if(curIndex%numsForDims[i]==0){
+          indexForSonArray = i;
+          // numsForZero = numsForDims[i];
+          break;
+        }
+      }
+      if(indexForSonArray == numsForDims.size()){
+        assert(false);
+      }
+      std::vector<int> sonDims;
+      std::vector<int> sonNumsForDims;
+      int allsonnum = 1;
+      for(int i = 0; i < dims.size(); i++){
+        if(i <= indexForSonArray){
+          continue;
+        }
+        sonDims.push_back(dims[i]);
+        sonNumsForDims.push_back(numsForDims[i]);
+        allsonnum *= dims[i];
+      }
+      son[0]->getInitValArray(sonArrayVec, sonDims, sonNumsForDims, allsonnum, str0);
+      resVec.insert(resVec.end(), sonArrayVec.begin(), sonArrayVec.end());
+    }
+    return resVec;
+  }
 };
 
 
-
+class ConstInitVal_dup: public BaseAST {
+  public:
+  ConstInitVal_dup(){
+    type = _ConstInitVal_dup;
+  }
+  std::string ident;
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    return "";
+  }
+  
+  std::vector<std::string> getInitValArray(std::vector<std::string>& resVec, std::vector<int>& dims, std::vector<int>& numsForDims, int allnum, std::string& str0) override
+  {
+    for(int i = 0; i < son.size(); i++){
+      son[i]->getInitValArray(resVec, dims, numsForDims, allnum, str0);
+    }
+    int curIndex = resVec.size();
+    while(curIndex < allnum){
+      resVec.push_back("0");
+      curIndex++;
+    }
+    return resVec;
+  }
+};
 
 
 class VarDecl: public BaseAST {
@@ -1541,64 +1864,250 @@ class VarDef: public BaseAST {
   }
   std::string ident;
   int initval;
+  std::unique_ptr<ConstNumAST> constNumAST;
   void Dump(std::string& str0) const override {
-    std::cout<<"GLOBAL VarDef"<<std::endl;
-    std::string tmp;
+    if(isArray == false){
+      std::cout<<"GLOBAL VarDef"<<std::endl;
+      std::string tmp;
 
-    tmp = '@' + ident + '_' + std::to_string(symcnt);
+      tmp = '@' + ident + '_' + std::to_string(symcnt);
 
-    str0 += "global "+tmp+" = alloc i32, ";
+      str0 += "global "+tmp+" = alloc i32, ";
 
-    if(son.size() > 0){
-      std::string globalVarExp = son[0]->retvaltmp(str0);
-      str0 += globalVarExp+'\n';
-      (*cur_table)[tmp] = globalVarExp;
-      value_table[tmp] = son[0]->val;
-    }
-    else{
-      str0 += "zeroinit\n";
-      (*cur_table)[tmp] = std::to_string(initval);
-      value_table[tmp] = 0;
-    }
-    var_table[tmp] = "used";
+      if(son.size() > 0){
+        std::string globalVarExp = son[0]->retvaltmp(str0);
+        str0 += globalVarExp+'\n';
+        (*cur_table)[tmp] = globalVarExp;
+        value_table[tmp] = son[0]->val;
+      }
+      else{
+        str0 += "zeroinit\n";
+        (*cur_table)[tmp] = std::to_string(initval);
+        value_table[tmp] = 0;
+      }
+      var_table[tmp] = "used";
    
-  }
-  std::string retvaltmp(std::string& str0) override  {
-    std::cout<<"VarDef"<<std::endl;
-    std::string tmp;
-    std::string tmp1;
-    // if(son.size()>0){
-    //   son[0]->retvaltmp(str0);
-    // }
+    }else if(isArray == true){
+      std::cout<<"GLOBAL VarDef"<<std::endl;
+      std::string tmp;
 
-    tmp = '@' + ident + '_' + std::to_string(symcnt);
-    if(var_table.find(tmp) ==  var_table.end()){
-      str0 += " " + tmp + " = alloc i32"+"\n";
+      tmp = '@' + ident + '_' + std::to_string(symcnt);
+      if(var_table.find(tmp) ==  var_table.end()){
+        str0 += "global " + tmp + " = alloc ";
+        int numOfArrayVector = constNumAST->arrayVector.size();
+        std::string tmpvecstr = "[i32, "+ std::to_string(constNumAST->arrayVector[numOfArrayVector - 1]) + "]";
+        for(int i = numOfArrayVector - 2; i >= 0; i--)
+        {
+          tmpvecstr = "[" + tmpvecstr +", "+std::to_string(constNumAST->arrayVector[i])+"]";
+        }
+        str0 += tmpvecstr ;
+        var_table[tmp] = "used";
+      }
+      // str0 += "global "+tmp+" = alloc i32, ";
+
+          
+      std::vector<int> numForEachDim;
+      numForEachDim.push_back(1);
+      int mulRes = 1;
+      for(int i = constNumAST->arrayVector.size() - 1; i > 0; i--){
+        mulRes *= constNumAST->arrayVector[i];
+        numForEachDim.push_back(mulRes);
+      }
+      mulRes *= constNumAST->arrayVector[0];
+      reverse(numForEachDim.begin(), numForEachDim.end());
+
+
+      if(son.size() > 0){
+        str0 += ", ";
+
+        std::vector<std::string> initValArray;
+        if(son[0]->son.size()>0){
+          if(son[0]->isArray == false){
+            assert(false);
+          }
+          son[0]->son[0]->getInitValArray(initValArray, constNumAST->arrayVector, numForEachDim, mulRes,str0);
+        }else{
+          for(int i = 0; i < mulRes; i++){
+            initValArray.push_back("0");
+          }
+        }
+
+        globalInitSearch(constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
+        str0 += "\n";
+
+        // std::cout<<"******************************************"<<std::endl;
+        // std::cout<<str0<<std::endl;
+        // assert(false);
+
+        (*cur_table)[tmp] = "initGlobalArray";
+        value_table[tmp] = 0;
+      }
+      else{
+        str0 += ", zeroinit\n";
+        (*cur_table)[tmp] = "initGlobalArray";
+        value_table[tmp] = 0;
+      }
       var_table[tmp] = "used";
     }
    
-    std::cout<<"VARDEF  "<<tmp<<std::endl;
-    std::cout<<"SYMCNT  "<<symcnt<<std::endl;
-    if(son.size() > 0){
-      tmp1 = son[0]->retvaltmp(str0);
-      str0 += " store " + tmp1 +", " + tmp+'\n';
-      str0 += "\n";
-      (*cur_table)[tmp] = tmp1;
-      value_table[tmp] = son[0]->val;
-      std::cout<<"INITVAL VARDEF ONE"<<tmp1<<std::endl;
-      // std::cout<<str0<<std::endl;
-    }
-    else{
-      str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
-      str0 += "\n";
-      (*cur_table)[tmp] = std::to_string(initval);
-      value_table[tmp] = 0;
-      std::cout<<"INITVAL VARDEF TWO"<<std::to_string(initval)<<std::endl;
-      // std::cout<<str0<<std::endl;
-    }
-   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    if(isArray == false){
+      std::cout<<"VarDef"<<std::endl;
+      std::string tmp;
+      std::string tmp1;
+      // if(son.size()>0){
+      //   son[0]->retvaltmp(str0);
+      // }
 
+      tmp = '@' + ident + '_' + std::to_string(symcnt);
+      if(var_table.find(tmp) ==  var_table.end()){
+        str0 += " " + tmp + " = alloc i32"+"\n";
+        var_table[tmp] = "used";
+      }
+    
+      std::cout<<"VARDEF  "<<tmp<<std::endl;
+      std::cout<<"SYMCNT  "<<symcnt<<std::endl;
+      if(son.size() > 0){
+        tmp1 = son[0]->retvaltmp(str0);
+        str0 += " store " + tmp1 +", " + tmp+'\n';
+        str0 += "\n";
+        (*cur_table)[tmp] = tmp1;
+        value_table[tmp] = son[0]->val;
+        std::cout<<"INITVAL VARDEF ONE"<<tmp1<<std::endl;
+        // std::cout<<str0<<std::endl;
+      }
+      else{
+        str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
+        str0 += "\n";
+        (*cur_table)[tmp] = std::to_string(initval);
+        value_table[tmp] = 0;
+        std::cout<<"INITVAL VARDEF TWO"<<std::to_string(initval)<<std::endl;
+        // std::cout<<str0<<std::endl;
+      }
+    
+
+      return "";
+    }else if(isArray == true){
+      std::cout<<"VarArrayDef"<<std::endl;
+      std::string tmp;
+      std::string tmp1;
+      // if(son.size()>0){
+      //   son[0]->retvaltmp(str0);
+      // }
+
+      tmp = '@' + ident + '_' + std::to_string(symcnt);
+      if(var_table.find(tmp) ==  var_table.end()){
+        str0 += " " + tmp + " = alloc ";
+        int numOfArrayVector = constNumAST->arrayVector.size();
+        std::string tmpvecstr = "[i32, "+ std::to_string(constNumAST->arrayVector[numOfArrayVector - 1]) + "]";
+        for(int i = numOfArrayVector - 2; i >= 0; i--)
+        {
+          tmpvecstr = "[" + tmpvecstr +", "+std::to_string(constNumAST->arrayVector[i])+"]";
+        }
+        str0 += tmpvecstr + '\n';
+        var_table[tmp] = "used";
+      }
+    
+      std::vector<int> numForEachDim;
+      numForEachDim.push_back(1);
+      int mulRes = 1;
+      for(int i = constNumAST->arrayVector.size() - 1; i > 0; i--){
+        mulRes *= constNumAST->arrayVector[i];
+        numForEachDim.push_back(mulRes);
+      }
+      mulRes *= constNumAST->arrayVector[0];
+      reverse(numForEachDim.begin(), numForEachDim.end());
+
+      // for(auto iter = numForEachDim.begin(); iter != numForEachDim.end(); iter++){
+      //   std::cout<<*iter<<std::endl;
+      // }
+
+      
+
+
+      std::cout<<"VARARRAYDEF  "<<tmp<<std::endl;
+      std::cout<<"SYMCNT  "<<symcnt<<std::endl;
+      if(son.size() > 0){
+        std::vector<std::string> initValArray;
+        if(son[0]->son.size()>0){
+          if(son[0]->isArray == false){
+            assert(false);
+          }
+          son[0]->son[0]->getInitValArray(initValArray, constNumAST->arrayVector, numForEachDim, mulRes,str0);
+        }else{
+          for(int i = 0; i < mulRes; i++){
+            initValArray.push_back("0");
+          }
+        }
+             // tmp1 = son[0]->retvaltmp(str0);
+        // str0 += " store " + tmp1 +", " + tmp+'\n';
+        // str0 += "\n";
+
+        for(auto iter = initValArray.begin(); iter != initValArray.end(); iter++){
+          std::cout<<*iter<<std::endl;
+        }
+
+        getElemPtr(tmp, constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
+        std::cout<<str0<<std::endl;
+        // assert(false);
+
+        (*cur_table)[tmp] = "initArray";
+        value_table[tmp] = 0;
+        // std::cout<<"INITVAL VARDEF ARRAY ONE"<<tmp1<<std::endl;
+        // std::cout<<str0<<std::endl;
+      }
+      else{
+        // str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
+        // str0 += "\n";
+        std::vector<std::string> initValArray;
+        for(int i = 0; i < mulRes; i++){
+          initValArray.push_back("0");
+        }
+        getElemPtr(tmp, constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
+        std::cout<<str0<<std::endl;
+        // assert(false);
+
+
+        (*cur_table)[tmp] = "initArray";
+        value_table[tmp] = 0;
+        // std::cout<<"INITVAL VARDEF TWO"<<std::to_string(initval)<<std::endl;
+        // std::cout<<str0<<std::endl;
+      }
+    }
     return "";
+  }
+
+  void getElemPtr(std::string ptrIdent,  std::vector<int>& dims, std::vector<int>& numsForDims, int curPtrIndex, std::string& str0, std::vector<std::string>& initArray, int initValIndex)
+  {
+    for(int i = 0; i < dims[curPtrIndex]; i++){
+      std::string regForPtr = '%'+std::to_string(tmpcnt);
+      tmpcnt++;
+      str0 += " "+regForPtr+" = getelemptr "+ptrIdent+", "+std::to_string(i)+"\n";
+      int tmpInitValIndex = initValIndex + numsForDims[curPtrIndex]*i;
+      if(curPtrIndex+1 == dims.size()){
+        str0 += " store "+initArray[tmpInitValIndex]+", "+regForPtr+"\n";
+      }else{
+        getElemPtr(regForPtr, dims, numsForDims, curPtrIndex+1, str0, initArray, tmpInitValIndex);
+      }
+    }
+  }
+  void globalInitSearch(std::vector<int>& dims, std::vector<int>& numsForDims, int curDimIndex, std::string& str0, std::vector<std::string>& initArray, int initValIndex) const
+  {
+    str0 += "{";
+    for(int i = 0; i < dims[curDimIndex]; i++){
+      if(i != 0){
+        str0 += ",";
+      }
+      int tmpInitValIndex = initValIndex + numsForDims[curDimIndex]*i;
+      if(curDimIndex + 1 == dims.size()){
+        str0 += initArray[tmpInitValIndex];
+      }else{
+        globalInitSearch(dims, numsForDims, curDimIndex+1, str0, initArray, tmpInitValIndex);
+      }
+
+    }
+    str0 += "}";
   }
 };
 
@@ -1618,5 +2127,87 @@ class InitVal: public BaseAST {
     val = son[0]->val;
     return tmp;
   }
+  std::vector<std::string> getInitValArray(std::vector<std::string>& resVec, std::vector<int>& dims, std::vector<int>& numsForDims, int allnum, std::string& str0) override
+  {
+    if(isArray == false){
+      std::string tmp = son[0]->retvaltmp(str0);
+      resVec.push_back(tmp);
+    }
+    if(son.size() == 0){
+      int curIndex = resVec.size();
+      std::vector<std::string> sonArrayVec;
+      int indexForSonArray = numsForDims.size();
+      int numsForZero = 0;
+      for(int i = 0; i < numsForDims.size(); i++){
+        if(curIndex%numsForDims[i]==0){
+          indexForSonArray = i;
+          numsForZero = numsForDims[i];
+          break;
+        }
+      }
+      if(indexForSonArray == numsForDims.size()){
+        assert(false);
+      }
+      for(int i = 0; i < numsForZero; i++){
+        resVec.push_back("0");
+      }
+
+    }else if(son.size() > 0){
+      int curIndex = resVec.size();
+      std::vector<std::string> sonArrayVec;
+      int indexForSonArray = numsForDims.size();
+      // int numsForZero = 0;
+      for(int i = 0; i < numsForDims.size(); i++){
+        if(curIndex%numsForDims[i]==0){
+          indexForSonArray = i;
+          // numsForZero = numsForDims[i];
+          break;
+        }
+      }
+      if(indexForSonArray == numsForDims.size()){
+        assert(false);
+      }
+      std::vector<int> sonDims;
+      std::vector<int> sonNumsForDims;
+      int allsonnum = 1;
+      for(int i = 0; i < dims.size(); i++){
+        if(i <= indexForSonArray){
+          continue;
+        }
+        sonDims.push_back(dims[i]);
+        sonNumsForDims.push_back(numsForDims[i]);
+        allsonnum *= dims[i];
+      }
+      son[0]->getInitValArray(sonArrayVec, sonDims, sonNumsForDims, allsonnum, str0);
+      resVec.insert(resVec.end(), sonArrayVec.begin(), sonArrayVec.end());
+    }
+    return resVec;
+  }
 };
 
+class InitVal_dup: public BaseAST {
+  public:
+  InitVal_dup(){
+    type = _InitVal_dup;
+  }
+  std::string ident;
+  void Dump(std::string& str0) const override {
+   
+  }
+  std::string retvaltmp(std::string& str0) override  {
+    return "";
+  }
+
+  std::vector<std::string> getInitValArray(std::vector<std::string>& resVec, std::vector<int>& dims, std::vector<int>& numsForDims, int allnum, std::string& str0) override
+  {
+    for(int i = 0; i < son.size(); i++){
+      son[i]->getInitValArray(resVec, dims, numsForDims, allnum, str0);
+    }
+    int curIndex = resVec.size();
+    while(curIndex < allnum){
+      resVec.push_back("0");
+      curIndex++;
+    }
+    return resVec;
+  }
+};

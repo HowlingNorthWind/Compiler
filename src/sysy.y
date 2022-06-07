@@ -34,6 +34,7 @@ int cnt = 0;
   int int_val;
   char char_val;
   class BaseAST *ast_val;
+  class ConstNumAST *ast_constnum_val;
 }
 
 // lexer 返回的所有 token 种类的声明
@@ -51,6 +52,8 @@ int cnt = 0;
 %type <ast_val> ConstDef BlockItem_dup BlockItem LVal ConstExp ConstInitVal
 %type <ast_val> VarDecl VarDef_dup VarDef InitVal
 %type <ast_val> FuncFParams FuncFParam FuncRParams CompUnit
+%type <ast_val> ConstInitVal_dup InitVal_dup LValNum
+%type <ast_constnum_val> ConstNum
 
 %%
 
@@ -170,13 +173,41 @@ BType
   ;
 
 ConstDef 
-  : IDENT '=' ConstInitVal {
-    sym_table[*$1] = $3->val;
+  : IDENT ConstNum '=' ConstInitVal {
     auto ast = new ConstDef();
-    ast->ident = *unique_ptr<string>($1);
-    ast->son.push_back($2);
-    ast->son.push_back($3);
-    ast->constinitval = $3->val;
+    ast->isArray = $2->isArray;
+    if($2->isArray == false){
+      sym_table[*$1] = $4->val;
+      
+      ast->ident = *unique_ptr<string>($1);
+      ast->son.push_back($3);
+      ast->son.push_back($4);
+      ast->constNumAST = unique_ptr<ConstNumAST>($2);
+      ast->constinitval = $4->val;
+    }else{
+      ast->ident = *unique_ptr<string>($1);
+      ast->son.push_back($2);
+      ast->son.push_back($3);
+      ast->son.push_back($4);
+      ast->constNumAST = unique_ptr<ConstNumAST>($2);
+    }
+    
+    $$ = ast;
+  }
+  ;
+
+ConstNum
+  : ConstNum '[' ConstExp ']' {
+    $1->son.push_back($3);
+    $1->isArray = true;
+    $1->arrayVector.push_back($3->val);
+    $1->val =  $1->val * $3->val;
+    $$ = $1;
+  }
+  | {
+    auto ast = new ConstNumAST();
+    ast->isArray = false;
+    ast->val = 1;
     $$ = ast;
   }
   ;
@@ -185,8 +216,32 @@ ConstInitVal
   : ConstExp {
     auto ast = new ConstInitVal();
     ast->val = $1->val;
+    ast->isArray = false;
     ast->son.push_back($1);
     $$ = ast;
+  }
+  | '{' '}' {
+    auto ast = new ConstInitVal();
+    ast->isArray = true;
+    $$ = ast;
+  }
+  | '{' ConstInitVal_dup '}' {
+    auto ast = new ConstInitVal();
+    ast->isArray = true;
+    ast->son.push_back($2);
+    $$ = ast;
+  }
+  ;
+
+ConstInitVal_dup
+  : ConstInitVal {
+    auto ast = new ConstInitVal_dup();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | ConstInitVal_dup ',' ConstInitVal {
+    $1->son.push_back($3);
+    $$ = $1;
   }
   ;
 
@@ -216,24 +271,37 @@ VarDef_dup
   ;
 
 VarDef
-  : IDENT {
+  : IDENT ConstNum {
     std::cout<<"VarDef"<<std::endl;
     auto ast = new VarDef();
-    ast->ident = *unique_ptr<string>($1);
-    std::cout<<ast->ident<<std::endl;
-    sym_table[ast->ident] = "";
+    ast->isArray = $2->isArray;
+    if($2->isArray == false){
+      ast->ident = *unique_ptr<string>($1); 
+      std::cout<<ast->ident<<std::endl;
+      sym_table[ast->ident] = "";
+    }else{
+      ast->ident = *unique_ptr<string>($1); 
+      ast->constNumAST = unique_ptr<ConstNumAST>($2);
+    }
     $$ = ast;
   }
-  | IDENT '=' InitVal {
+  | IDENT ConstNum '=' InitVal {
     std::cout<<"VarDef"<<std::endl;
     auto ast = new VarDef();
-    ast->ident = *unique_ptr<string>($1);
-    ast->initval = $3->val;
-    ast->val = $3->val;
-    cout<<"VarDef"<<endl;
-    cout<<ast->val<<endl;
-    ast->son.push_back($3);
-    sym_table[ast->ident] = "";
+    ast->isArray = $2->isArray;
+    if($2->isArray == false){
+      ast->ident = *unique_ptr<string>($1);
+      ast->initval = $4->val;
+      ast->val = $4->val;
+      cout<<"VarDef"<<endl;
+      cout<<ast->val<<endl;
+      ast->son.push_back($4);
+      sym_table[ast->ident] = "";
+    }else{
+      ast->ident = *unique_ptr<string>($1);
+      ast->constNumAST = unique_ptr<ConstNumAST>($2);
+      ast->son.push_back($4);
+    }
     $$ = ast;
   }
   ;
@@ -243,9 +311,34 @@ InitVal
     auto ast = new InitVal();
     ast->son.push_back($1);
     ast->val = $1->val;
+    ast->isArray = false;
     cout<<"InitVal"<<endl;
     cout<<ast->val<<endl;
     $$ = ast;
+  }
+  | '{' '}' {
+    auto ast = new InitVal();
+    ast->isArray = true;
+    $$ = ast;
+
+  }
+  | '{' InitVal_dup '}' {
+    auto ast = new InitVal();
+    ast->isArray = true;
+    ast->son.push_back($2);
+    $$ = ast;
+  }
+  ;
+
+InitVal_dup
+  : InitVal {
+    auto ast = new InitVal_dup();
+    ast->son.push_back($1);
+    $$ = ast;
+  }
+  | InitVal_dup ',' InitVal {
+    $1->son.push_back($3);
+    $$ = $1;
   }
   ;
 
@@ -355,7 +448,7 @@ BlockItem
   ;
 
 LVal 
-  : IDENT {
+  : IDENT LValNum {
     auto ast = new LVal();
     ast->ident = *unique_ptr<string>($1);
     if(sym_table.find(ast->ident) != sym_table.end()){
@@ -369,6 +462,17 @@ LVal
     }
     
     $$ = ast;
+  }
+  ;
+
+LValNum
+  : {
+    auto ast = new LValNum();
+    $$ = ast;
+  }
+  | LValNum '[' Exp ']' {
+    $1->son.push_back($3);
+    $$ = $1;
   }
   ;
 
