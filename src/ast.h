@@ -99,6 +99,10 @@ class CompUnitAST : public BaseAST {
   void Dump(std::string& str0) const override {
     // std::cout << "CompUnitAST { ";
     cur_table = &sym_table;
+
+    std::map<std::string, std::variant<int, std::string>> global_var_table;
+    curFunvar_table = &global_var_table;
+
     str0 = "";
     //lv8-2
     str0 += "decl @getint(): i32\n";
