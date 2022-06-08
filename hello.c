@@ -1,15 +1,20 @@
-
-int main() {
-  int arr[10], n = getarray(arr);
+void f1d(int arr[]) {
   int i = 0;
   while (i < 10) {
-    if (i < n) {
-      arr[i] = arr[i] + i;
-    } else {
-      arr[i] = arr[i - 1] + i;
-    }
+    arr[i] = i;
     i = i + 1;
   }
-  putarray(n, arr);
-  return 0;
+}
+
+void f2d(int arr[][8 + 2]) {
+  arr[1][2] = 3;
+  int i = 0;
+  while (i < 10) {
+    f1d(arr[i]);
+    i = i + 1;
+  }
+}
+
+int main() {
+  return 33;
 }

@@ -32,6 +32,7 @@ string cur_end = "";
 string cur_entry = "";
 map<string, variant<int, string>> sym_table;
 map<string, variant<int, string>> var_table;
+map<string, variant<int, string>> *curFunvar_table;
 map<string, int> value_table;
 map<string, string> funcTable;
 map<string, variant<int, string>> *cur_table;

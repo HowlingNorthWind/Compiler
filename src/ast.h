@@ -21,6 +21,7 @@ extern std::string cur_end;
 extern std::string cur_entry;
 extern std::map<std::string, std::variant<int, std::string>> sym_table;
 extern std::map<std::string, std::variant<int, std::string>> var_table;
+extern std::map<std::string, std::variant<int, std::string>> *curFunvar_table;
 extern std::map<std::string, int> value_table;
 extern std::map<std::string, std::string> funcTable;
 extern std::map<std::string, std::variant<int, std::string>> *cur_table;
@@ -188,6 +189,11 @@ class FuncDefAST : public BaseAST {
     std::map<std::string, std::variant<int, std::string>> *tmp_table = cur_table;
     cur_table = &new_table;
     total_table[cur_table] =  tmp_table;
+
+    std::map<std::string, std::variant<int, std::string>> new_var_table;
+    std::map<std::string, std::variant<int, std::string>> *tmp_var_table = curFunvar_table;
+    curFunvar_table = &new_var_table;
+
     std::map<std::string, std::variant<int, std::string>>::iterator iter;
     std::cout<<"ITERATOR CUR"<<std::endl;
     for(iter = (*cur_table).begin(); iter != (*cur_table).end(); ++iter){
@@ -244,6 +250,7 @@ class FuncDefAST : public BaseAST {
     
     str0 += "}\n";
     cur_table = tmp_table;
+    curFunvar_table = tmp_var_table;
     symcnt -= 1;
     std::cout<<str0<<std::endl;
     // fprintf(yyout, "}");
@@ -1637,7 +1644,7 @@ class ConstDef: public BaseAST {
       std::string tmp;
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
-      if(var_table.find(tmp) ==  var_table.end()){
+      if((*curFunvar_table).find(tmp) ==  (*curFunvar_table).end()){
         str0 += "global " + tmp + " = alloc ";
         int numOfArrayVector = constNumAST->arrayVector.size();
         std::string tmpvecstr = "[i32, "+ std::to_string(constNumAST->arrayVector[numOfArrayVector - 1]) + "]";
@@ -1646,7 +1653,7 @@ class ConstDef: public BaseAST {
           tmpvecstr = "[" + tmpvecstr +", "+std::to_string(constNumAST->arrayVector[i])+"]";
         }
         str0 += tmpvecstr;
-        var_table[tmp] = "used";
+        (*curFunvar_table)[tmp] = "used";
       }
 
       
@@ -1691,7 +1698,7 @@ class ConstDef: public BaseAST {
         (*cur_table)[tmp] = "initGlobalArray";
         value_table[tmp] = 0;
       }
-      var_table[tmp] = "used";
+      (*curFunvar_table)[tmp] = "used";
     }
   }
   std::string retvaltmp(std::string& str0) override  {
@@ -1714,7 +1721,7 @@ class ConstDef: public BaseAST {
       // }
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
-      if(var_table.find(tmp) ==  var_table.end()){
+      if((*curFunvar_table).find(tmp) ==  (*curFunvar_table).end()){
         str0 += " " + tmp + " = alloc ";
         int numOfArrayVector = constNumAST->arrayVector.size();
         std::string tmpvecstr = "[i32, "+ std::to_string(constNumAST->arrayVector[numOfArrayVector - 1]) + "]";
@@ -1723,7 +1730,7 @@ class ConstDef: public BaseAST {
           tmpvecstr = "[" + tmpvecstr +", "+std::to_string(constNumAST->arrayVector[i])+"]";
         }
         str0 += tmpvecstr + '\n';
-        var_table[tmp] = "used";
+        (*curFunvar_table)[tmp] = "used";
       }
     
       std::vector<int> numForEachDim;
@@ -2159,14 +2166,14 @@ class VarDef: public BaseAST {
         (*cur_table)[tmp] = std::to_string(initval);
         value_table[tmp] = 0;
       }
-      var_table[tmp] = "used";
+      (*curFunvar_table)[tmp] = "used";
    
     }else if(isArray == true){
       std::cout<<"GLOBAL VarDef"<<std::endl;
       std::string tmp;
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
-      if(var_table.find(tmp) ==  var_table.end()){
+      if((*curFunvar_table).find(tmp) ==  (*curFunvar_table).end()){
         str0 += "global " + tmp + " = alloc ";
         int numOfArrayVector = constNumAST->arrayVector.size();
         std::string tmpvecstr = "[i32, "+ std::to_string(constNumAST->arrayVector[numOfArrayVector - 1]) + "]";
@@ -2175,7 +2182,7 @@ class VarDef: public BaseAST {
           tmpvecstr = "[" + tmpvecstr +", "+std::to_string(constNumAST->arrayVector[i])+"]";
         }
         str0 += tmpvecstr ;
-        var_table[tmp] = "used";
+        (*curFunvar_table)[tmp] = "used";
       }
       // str0 += "global "+tmp+" = alloc i32, ";
 
@@ -2221,7 +2228,7 @@ class VarDef: public BaseAST {
         (*cur_table)[tmp] = "initGlobalArray";
         value_table[tmp] = 0;
       }
-      var_table[tmp] = "used";
+      (*curFunvar_table)[tmp] = "used";
     }
    
   }
@@ -2235,9 +2242,9 @@ class VarDef: public BaseAST {
       // }
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
-      if(var_table.find(tmp) ==  var_table.end()){
+      if((*curFunvar_table).find(tmp) ==  (*curFunvar_table).end()){
         str0 += " " + tmp + " = alloc i32"+"\n";
-        var_table[tmp] = "used";
+        (*curFunvar_table)[tmp] = "used";
       }
     
       std::cout<<"VARDEF  "<<tmp<<std::endl;
@@ -2271,7 +2278,7 @@ class VarDef: public BaseAST {
       // }
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
-      if(var_table.find(tmp) ==  var_table.end()){
+      if((*curFunvar_table).find(tmp) ==  (*curFunvar_table).end()){
         str0 += " " + tmp + " = alloc ";
         int numOfArrayVector = constNumAST->arrayVector.size();
         std::string tmpvecstr = "[i32, "+ std::to_string(constNumAST->arrayVector[numOfArrayVector - 1]) + "]";
@@ -2280,7 +2287,7 @@ class VarDef: public BaseAST {
           tmpvecstr = "[" + tmpvecstr +", "+std::to_string(constNumAST->arrayVector[i])+"]";
         }
         str0 += tmpvecstr + '\n';
-        var_table[tmp] = "used";
+        (*curFunvar_table)[tmp] = "used";
       }
     
       std::vector<int> numForEachDim;
