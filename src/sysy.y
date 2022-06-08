@@ -403,8 +403,17 @@ FuncFParams
 FuncFParam
   : BType IDENT {
     auto ast = new FuncFParamAST();
+    ast->isArray = false;
     ast->son.push_back($1);
     ast->ident = *unique_ptr<string>($2);
+    $$ = ast;
+  }
+  | BType IDENT '[' ']' ConstNum {
+    auto ast = new FuncFParamAST();
+    ast->son.push_back($1);
+    ast->isArray = true;
+    ast->ident = *unique_ptr<string>($2);
+    ast->constNumAST = unique_ptr<ConstNumAST>($5);
     $$ = ast;
   }
   ;
@@ -450,15 +459,21 @@ BlockItem
 LVal 
   : IDENT LValNum {
     auto ast = new LVal();
-    ast->ident = *unique_ptr<string>($1);
-    if(sym_table.find(ast->ident) != sym_table.end()){
-      std::variant<int, std::string> variant_tmp = sym_table.at(ast->ident);
-      std::cout<<"LVAL"<<std::endl;
-      std::cout<<variant_tmp.index()<<std::endl;
-      if(variant_tmp.index()==0){
-        ast->val = std::get<int>(variant_tmp);
+    ast->isArray = $2->isArray;
+    if(ast->isArray == false){
+      ast->ident = *unique_ptr<string>($1);
+      if(sym_table.find(ast->ident) != sym_table.end()){
+        std::variant<int, std::string> variant_tmp = sym_table.at(ast->ident);
+        std::cout<<"LVAL"<<std::endl;
+        std::cout<<variant_tmp.index()<<std::endl;
+        if(variant_tmp.index()==0){
+          ast->val = std::get<int>(variant_tmp);
+        }
+        // ast->val = sym_table.at(*$1);  
       }
-      // ast->val = sym_table.at(*$1);  
+    }else if(ast->isArray == true){
+      ast->ident = *unique_ptr<string>($1);
+      ast->son.push_back($2);
     }
     
     $$ = ast;
@@ -468,9 +483,11 @@ LVal
 LValNum
   : {
     auto ast = new LValNum();
+    ast->isArray = false;
     $$ = ast;
   }
   | LValNum '[' Exp ']' {
+    $1->isArray = true;
     $1->son.push_back($3);
     $$ = $1;
   }

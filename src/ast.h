@@ -33,6 +33,7 @@ enum TYPE{
   _ConstDecl, _ConstDef_dup, _BType, _ConstDef, _BlockItem_dup, _BlockItem,
   _LVal, _ConstExp, _ConstInitVal, _Stmt, _VarDecl, _VarDef_dup, _VarDef, 
   _InitVal, _Block, _ConstNum, _LValNum, _InitVal_dup, _ConstInitVal_dup, 
+  _FuncNum, _FuncArrayNum,
 };
 
 class BaseAST {
@@ -50,10 +51,17 @@ class BaseAST {
   {
     return "";
   }
+  virtual std::string getElemPtrForLVal(std::string& str0, std::string& resident, bool isArrayFunParam)
+  {
+    return "";
+  }
   virtual std::vector<std::string> getInitValArray(std::vector<std::string>& resVec, std::vector<int>& dims, std::vector<int>& numsForDims, int allnum, std::string& str0)
   {
     
     return resVec;
+  }
+  virtual std::string typeForArrayFParam(){
+    return "";
   }
   std::vector<BaseAST *> son;
   TYPE type;
@@ -126,6 +134,8 @@ class CompUnitAST : public BaseAST {
   }
 };
 
+
+
 // FuncDef 也是 BaseAST
 class FuncDefAST : public BaseAST {
  public:
@@ -155,8 +165,9 @@ class FuncDefAST : public BaseAST {
     }
     str0 += ")";
    
-
-    std::cout<<"ASDFGHGFDS"<<str0<<std::endl;
+    // std::cout<<str0<<std::endl;
+    // assert(false);
+    // std::cout<<"ASDFGHGFDS"<<str0<<std::endl;
     
     if(son[0]->func_type_all == "int"){
       str0 += ": i32";
@@ -192,13 +203,27 @@ class FuncDefAST : public BaseAST {
       int numOfFParam = son[1]->son.size();
       
       for(int i = 0; i < numOfFParam; i++){
-        std::string ident = son[1]->son[i]->retvaltmp(str0);
-        std::string identIndex = "@"+ident+'_'+std::to_string(symcnt);
-        std::string paramName = "@"+ident;
-        str0 += " @"+ident+'_'+std::to_string(symcnt);
-        str0 += " = alloc i32\n";
-        str0 += " store @"+ident+", @"+ident+'_'+std::to_string(symcnt)+'\n';
-        (*cur_table)[identIndex] = paramName;
+        if(son[1]->son[i]->isArray == false){
+          std::string ident = son[1]->son[i]->retvaltmp(str0);
+          std::string identIndex = "@"+ident+'_'+std::to_string(symcnt);
+          std::string paramName = "@"+ident;
+          str0 += " @"+ident+'_'+std::to_string(symcnt);
+          str0 += " = alloc i32\n";
+          str0 += " store @"+ident+", @"+ident+'_'+std::to_string(symcnt)+'\n';
+          (*cur_table)[identIndex] = paramName;
+        }else if(son[1]->son[i]->isArray == true){
+          std::string ident = son[1]->son[i]->retvaltmp(str0);
+          std::string identIndex = "@"+ident+'_'+std::to_string(symcnt);
+          std::string paramName = "@"+ident;
+
+          std::string typeForArray = son[1]->son[i]->typeForArrayFParam();
+
+          str0 += " @"+ident+'_'+std::to_string(symcnt);
+          str0 += " = alloc "+typeForArray+"\n";
+          str0 += " store @"+ident+", @"+ident+'_'+std::to_string(symcnt)+'\n';
+          (*cur_table)[identIndex] = "ArrayParam";
+        }
+        
       }
     }
     
@@ -262,15 +287,50 @@ class FuncFParamsAST : public BaseAST {
 
 class FuncFParamAST : public BaseAST {
   public:
+  std::unique_ptr<ConstNumAST> constNumAST;
   std::string ident;
   void Dump(std::string& str0) const override {
     str0 += "@"+ident;
     str0 += ": ";
-    son[0]->Dump(str0);
+    if(isArray == false){
+      son[0]->Dump(str0);
+    }else if(isArray == true){
+
+      int numOfArrayVector = constNumAST->arrayVector.size();
+      if(numOfArrayVector == 0){
+        str0 += "*i32";
+      }else if(numOfArrayVector > 0){
+        std::string tmpvecstr = "[i32, "+ std::to_string(constNumAST->arrayVector[numOfArrayVector - 1]) + "]";
+        for(int i = numOfArrayVector - 2; i >= 0; i--)
+        {
+          tmpvecstr = "[" + tmpvecstr +", "+std::to_string(constNumAST->arrayVector[i])+"]";
+        }
+        str0 += "*";
+        str0 += tmpvecstr;
+      }
+    }
+
     
   }
   std::string retvaltmp(std::string& str0) override{
     return ident;
+  }
+
+  std::string typeForArrayFParam() override{
+    std::string resStr;
+    int numOfArrayVector = constNumAST->arrayVector.size();
+    if(numOfArrayVector == 0){
+      resStr += "*i32";
+    }else if(numOfArrayVector > 0){
+      std::string tmpvecstr = "[i32, "+ std::to_string(constNumAST->arrayVector[numOfArrayVector - 1]) + "]";
+      for(int i = numOfArrayVector - 2; i >= 0; i--)
+      {
+        tmpvecstr = "[" + tmpvecstr +", "+std::to_string(constNumAST->arrayVector[i])+"]";
+      }
+      resStr += "*";
+      resStr += tmpvecstr;
+    }
+    return resStr;
   }
 
 };
@@ -443,33 +503,75 @@ class StmtAST : public BaseAST {
     }else if(son.size() == 0){
       return;
     }else if(son[0]->type == _LVal){
-      std::cout<<"STMT2"<<std::endl;
-      std::string tmpexp, tmpident;
-      std::string resident;
-      tmpexp = son[2]->retvaltmp(str0);
-      tmpident = '@'+son[0]->retvaltmp(str0);
-      int tmpsymcnt = symcnt;
-      std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
-      // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
-      while(tmpsymcnt > 0){
-        std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
-        if((*search_table).find(tmptmpident) != (*search_table).end()){
-          resident = tmptmpident;
-          std::cout<<"resident  "<<resident<<std::endl;
-          break;
+      if(son[0]->isArray == false){
+        std::cout<<"STMT2"<<std::endl;
+        std::string tmpexp, tmpident;
+        std::string resident;
+        tmpexp = son[2]->retvaltmp(str0);
+        tmpident = '@'+son[0]->retvaltmp(str0);
+        int tmpsymcnt = symcnt;
+        std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
+        // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
+        while(tmpsymcnt > 0){
+          std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
+          if((*search_table).find(tmptmpident) != (*search_table).end()){
+            resident = tmptmpident;
+            std::cout<<"resident  "<<resident<<std::endl;
+            break;
+          }
+          search_table = total_table[search_table];
+          tmpsymcnt -= 1;
         }
-        search_table = total_table[search_table];
-        tmpsymcnt -= 1;
-      }
-      // *cur_table = tmp_table;
-      if(tmpsymcnt == 0){
-        std::cout<<"WRONG AT FIND IDENT"<<std::endl;
-        assert(false);
-      }
+        // *cur_table = tmp_table;
+        if(tmpsymcnt == 0){
+          std::cout<<"WRONG AT FIND IDENT"<<std::endl;
+          assert(false);
+        }
 
-      str0 += " store " + tmpexp + ", " + resident+'\n';
-      str0 += '\n';
-      std::cout<<str0<<std::endl;
+        str0 += " store " + tmpexp + ", " + resident+'\n';
+        str0 += '\n';
+        std::cout<<str0<<std::endl;
+      }else if(son[0]->isArray == true){
+        std::cout<<"STMT2"<<std::endl;
+        bool isArrayFunParam = false;
+        std::string tmpexp, tmpident;
+        std::string resident;
+        tmpexp = son[2]->retvaltmp(str0);
+        tmpident = '@'+son[0]->retvaltmp(str0);
+        int tmpsymcnt = symcnt;
+        std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
+        // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
+        while(tmpsymcnt > 0){
+          std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
+          if((*search_table).find(tmptmpident) != (*search_table).end()){
+            resident = tmptmpident;
+            // std::cout<<"resident  "<<resident<<std::endl;
+            std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
+            if(variant_tmp.index() == 0){
+              assert(false);
+            }
+            std::string arrayType = std::get<std::string>(variant_tmp);
+            std::cout<<arrayType<<std::endl;
+            if(arrayType == "ArrayParam"){
+              isArrayFunParam = true;
+            }
+            break;
+          }
+          search_table = total_table[search_table];
+          tmpsymcnt -= 1;
+        }
+        // *cur_table = tmp_table;
+        if(tmpsymcnt == 0){
+          std::cout<<"WRONG AT FIND IDENT"<<std::endl;
+          assert(false);
+        }
+        std::string ptrForLVal = son[0]->getElemPtrForLVal(str0, resident, isArrayFunParam);
+
+        str0 += " store " + tmpexp + ", " + ptrForLVal+'\n';
+        str0 += '\n';
+        std::cout<<str0<<std::endl;
+      }
+      
     }else if(son[0]->type == _Exp){
       std::cout<<"STMT EXP"<<std::endl;
       son[0]->retvaltmp(str0);
@@ -633,60 +735,171 @@ class UnaryExp : public BaseAST {
         val = ptr->son[0]->val;
       }else if(ptr->son[0]->type == _LVal)
       {
-        tmp1 = ptr->son[0]->retvaltmp(str0);
+        if(ptr->son[0]->isArray == false){
+          tmp1 = ptr->son[0]->retvaltmp(str0);
 
-        std::string tmpident = '@' + tmp1;
-        std::string resident;
-        int tmpsymcnt = symcnt;
-        std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
-        // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
-        std::cout<<"START FIND IDENT"<<std::endl;
-        std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
-        std::cout<<"SYMCNT "<<symcnt<<std::endl;
-        while(tmpsymcnt > 0){
-          std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
+          bool isArrayWithoutSymbol = false;
+          bool isArrayFunParam = false;
+
+          std::string tmpident = '@' + tmp1;
+          std::string resident;
+          int tmpsymcnt = symcnt;
+          std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
+          // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
+          std::cout<<"START FIND IDENT"<<std::endl;
           std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
-          std::cout<<"TMPTMPIDENT "<<tmptmpident<<std::endl;
+          std::cout<<"SYMCNT "<<symcnt<<std::endl;
+          while(tmpsymcnt > 0){
+            std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
+            std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
+            std::cout<<"TMPTMPIDENT "<<tmptmpident<<std::endl;
 
-          std::map<std::string, std::variant<int, std::string>>::iterator iter;
-          std::cout<<"ITERATOR"<<std::endl;
-          for(iter = (*search_table).begin(); iter != (*search_table).end(); ++iter){
-            std::cout<<iter->first<<std::endl;
+            std::map<std::string, std::variant<int, std::string>>::iterator iter;
+            std::cout<<"ITERATOR"<<std::endl;
+            for(iter = (*search_table).begin(); iter != (*search_table).end(); ++iter){
+              std::cout<<iter->first<<std::endl;
+            }
+            if((*search_table).find(tmptmpident) != (*search_table).end()){
+              resident = tmptmpident;
+              std::cout<<"resident  "<<resident<<std::endl;
+              std::cout<<"resident  "<<resident<<std::endl;
+              std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
+              if(variant_tmp.index() == 1){
+                std::string arrayType = std::get<std::string>(variant_tmp);
+                std::cout<<arrayType<<std::endl;
+                if(arrayType == "ArrayParam"){
+                  isArrayFunParam = true;
+                  isArrayWithoutSymbol = true;
+                }
+                if(arrayType == "initArray"){
+                  isArrayWithoutSymbol = true;
+                }
+                if(arrayType == "initGlobalArray"){
+                  isArrayWithoutSymbol = true;
+                }
+              }
+              
+              break;
+            }
+            search_table = total_table[search_table];
+            tmpsymcnt -= 1;          
           }
-          if((*search_table).find(tmptmpident) != (*search_table).end()){
-            resident = tmptmpident;
-            std::cout<<"resident  "<<resident<<std::endl;
-            break;
+          // *cur_table = tmp_table;
+          if(tmpsymcnt == 0){
+            std::cout<<"WRONG AT FIND IDENT"<<std::endl;
           }
-          search_table = total_table[search_table];
-          tmpsymcnt -= 1;          
-        }
-        // *cur_table = tmp_table;
-        if(tmpsymcnt == 0){
-          std::cout<<"WRONG AT FIND IDENT"<<std::endl;
-        }
 
-        
-        val = value_table[resident];
-        std::cout<<"RESIIIIDENT    "<<resident<<std::endl;
-        std::cout<<val<<std::endl;
-        std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
-        std::cout<<variant_tmp.index()<<std::endl;
-        if(variant_tmp.index() == 1){
+          if(isArrayWithoutSymbol == true){
+            std::string ptrIdent = ptr->son[0]->getElemPtrForLVal(str0, resident, isArrayFunParam);
+            // std::string valueForLValArray = '%'+std::to_string(tmpcnt);
+            // tmpcnt++;
+            // str0 += " "+valueForLValArray+" = load "+ptrIdent+"\n";
+            std::cout<<str0<<std::endl;
+            // assert(false);
+            return ptrIdent;
+          }else{
+            val = value_table[resident];
+            std::cout<<"RESIIIIDENT    "<<resident<<std::endl;
+            std::cout<<val<<std::endl;
+            std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
+            std::cout<<variant_tmp.index()<<std::endl;
+            if(variant_tmp.index() == 1){
+              
+              std::string tmptmp;
+              tmptmp = "%" + std::to_string(tmpcnt);
+              tmpcnt++;
+              tmp1 = '@' + tmp1;
+              str0 += " "+tmptmp+" = load "+resident+'\n';
+              std::cout<<str0<<std::endl;
+              // val = ptr->son[0]->val;
+              return tmptmp;
+            }else if(variant_tmp.index() == 0){
+              int tmpval = std::get<int>(variant_tmp);
+              std::string tmp = std::to_string(tmpval);
+              // val = tmpval;
+              return tmp;
+            }
+          }
           
-          std::string tmptmp;
-          tmptmp = "%" + std::to_string(tmpcnt);
+          
+          
+        }else if(ptr->son[0]->isArray == true){
+          bool isArrayFunParam = false;
+          tmp1 = ptr->son[0]->retvaltmp(str0);
+
+          std::string tmpident = '@' + tmp1;
+          std::string resident;
+          int tmpsymcnt = symcnt;
+          std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
+          // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
+          std::cout<<"START FIND IDENT"<<std::endl;
+          std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
+          std::cout<<"SYMCNT "<<symcnt<<std::endl;
+          while(tmpsymcnt > 0){
+            std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
+            std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
+            std::cout<<"TMPTMPIDENT "<<tmptmpident<<std::endl;
+
+            std::map<std::string, std::variant<int, std::string>>::iterator iter;
+            std::cout<<"ITERATOR"<<std::endl;
+            for(iter = (*search_table).begin(); iter != (*search_table).end(); ++iter){
+              std::cout<<iter->first<<std::endl;
+            }
+            if((*search_table).find(tmptmpident) != (*search_table).end()){
+              resident = tmptmpident;
+              std::cout<<"resident  "<<resident<<std::endl;
+              std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
+              if(variant_tmp.index() == 0){
+                assert(false);
+              }
+              std::string arrayType = std::get<std::string>(variant_tmp);
+              std::cout<<arrayType<<std::endl;
+              if(arrayType == "ArrayParam"){
+                isArrayFunParam = true;
+              }
+              break;
+            }
+            search_table = total_table[search_table];
+            tmpsymcnt -= 1;          
+          }
+          // *cur_table = tmp_table;
+          if(tmpsymcnt == 0){
+            std::cout<<"WRONG AT FIND IDENT"<<std::endl;
+          }
+
+          std::cout<<resident<<std::endl;
+          std::cout<<isArrayFunParam<<std::endl;
+          // assert(false);
+
+          std::string ptrIdent = ptr->son[0]->getElemPtrForLVal(str0, resident, isArrayFunParam);
+          std::string valueForLValArray = '%'+std::to_string(tmpcnt);
           tmpcnt++;
-          tmp1 = '@' + tmp1;
-          str0 += " "+tmptmp+" = load "+resident+'\n';
+          str0 += " "+valueForLValArray+" = load "+ptrIdent+"\n";
           std::cout<<str0<<std::endl;
-          // val = ptr->son[0]->val;
-          return tmptmp;
-        }else if(variant_tmp.index() == 0){
-          int tmpval = std::get<int>(variant_tmp);
-          std::string tmp = std::to_string(tmpval);
-          // val = tmpval;
-          return tmp;
+          // assert(false);
+          return valueForLValArray;
+
+          // val = value_table[resident];
+          // std::cout<<"RESIIIIDENT    "<<resident<<std::endl;
+          // std::cout<<val<<std::endl;
+          // std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
+          // std::cout<<variant_tmp.index()<<std::endl;
+          // if(variant_tmp.index() == 1){
+            
+          //   std::string tmptmp;
+          //   tmptmp = "%" + std::to_string(tmpcnt);
+          //   tmpcnt++;
+          //   tmp1 = '@' + tmp1;
+          //   str0 += " "+tmptmp+" = load "+resident+'\n';
+          //   std::cout<<str0<<std::endl;
+          //   // val = ptr->son[0]->val;
+          //   return tmptmp;
+          // }else if(variant_tmp.index() == 0){
+          //   int tmpval = std::get<int>(variant_tmp);
+          //   std::string tmp = std::to_string(tmpval);
+          //   // val = tmpval;
+          //   return tmp;
+          // }
         }
         
       }
@@ -1675,6 +1888,67 @@ class LVal: public BaseAST {
     // std::string tmp = std::to_string(val);
     std::string tmp = '@'+ident;
     return ident;
+  }
+  std::string getElemPtrForLVal(std::string& str0, std::string& resident, bool isArrayFunParam) override
+  {
+    if(isArray == false){
+      // assert(false);
+      std::string ptrIdent = resident;
+    
+      if(isArrayFunParam == false){
+        
+        std::string ptrnum = "0";
+        std::string regForPtr = '%'+std::to_string(tmpcnt);
+        tmpcnt++;
+        str0 += " "+regForPtr+" = getelemptr "+ptrIdent+", "+ptrnum+"\n";
+        ptrIdent = regForPtr;
+        
+      }else if(isArrayFunParam == true){
+        std::string regToLoadArrayParam = '%'+std::to_string(tmpcnt);
+        tmpcnt++;
+        str0 += " "+regToLoadArrayParam+" = load "+resident+"\n";
+        std::string regToGetPtrArrayParam = '%'+std::to_string(tmpcnt);
+        tmpcnt++;
+        std::string ptrnum0 = "0";
+        str0 += " "+regToGetPtrArrayParam+" = getptr "+regToLoadArrayParam+", "+ptrnum0+"\n";
+    
+        ptrIdent = regToGetPtrArrayParam;
+      }
+      
+
+      return ptrIdent;
+    }
+    std::string ptrIdent = resident;
+    
+    if(isArrayFunParam == false){
+      for(int i = 0; i < son[0]->son.size(); i++){
+        std::string ptrnum = son[0]->son[i]->retvaltmp(str0);
+        std::string regForPtr = '%'+std::to_string(tmpcnt);
+        tmpcnt++;
+        str0 += " "+regForPtr+" = getelemptr "+ptrIdent+", "+ptrnum+"\n";
+        ptrIdent = regForPtr;
+      }
+    }else if(isArrayFunParam == true){
+      std::string regToLoadArrayParam = '%'+std::to_string(tmpcnt);
+      tmpcnt++;
+      str0 += " "+regToLoadArrayParam+" = load "+resident+"\n";
+      std::string regToGetPtrArrayParam = '%'+std::to_string(tmpcnt);
+      tmpcnt++;
+      std::string ptrnum0 = son[0]->son[0]->retvaltmp(str0);
+      str0 += " "+regToGetPtrArrayParam+" = getptr "+regToLoadArrayParam+", "+ptrnum0+"\n";
+   
+      ptrIdent = regToGetPtrArrayParam;
+      for(int i = 1; i < son[0]->son.size(); i++){
+        std::string ptrnum = son[0]->son[i]->retvaltmp(str0);
+        std::string regForPtr = '%'+std::to_string(tmpcnt);
+        tmpcnt++;
+        str0 += " "+regForPtr+" = getelemptr "+ptrIdent+", "+ptrnum+"\n";
+        ptrIdent = regForPtr;
+      }
+    }
+    
+
+    return ptrIdent;
   }
 };
 
