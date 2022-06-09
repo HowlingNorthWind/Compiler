@@ -265,6 +265,9 @@ void Visit(const koopa_raw_function_t &func) {
   spForFuncParams = max(0, maxLenForArgs - 8)*4;
   int spForAll = spForEachInst + spForFuncParams + spForRa;
   spForAll = (spForAll + 15)/16*16;
+  if(spForAll > 2047){
+    assert(false);
+  }
   mapFuncToSp[func] = spForAll;
   mapFuncToRa[func] = spForRa;
   int specialSpForEachInst = 0;

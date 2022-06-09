@@ -156,7 +156,7 @@ class FuncDefAST : public BaseAST {
   std::unique_ptr<BaseAST> block;
   std::string func_type_str;
   void Dump(std::string& str0) const override {
-    std::cout << "FuncDefAST  "<<ident<<" "<<str0<<std::endl;
+    // std::cout << "FuncDefAST  "<<ident<<" "<<str0<<std::endl;
     // func_type->Dump();
     // std::cout << ", " << ident << ", ";
     // block->Dump();
