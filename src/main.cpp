@@ -393,7 +393,7 @@ void Visit(const koopa_raw_value_t &value) {
     case KOOPA_RVT_ZERO_INIT:
      
    
-      myInitArray(value);
+      // myInitArray(value);
       
       break;
     case KOOPA_RVT_AGGREGATE:
