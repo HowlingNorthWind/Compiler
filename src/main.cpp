@@ -399,14 +399,14 @@ void Visit(const koopa_raw_value_t &value) {
     // case KOOPA_RVT_AGGREGATE:
     //   // Visit(kind.data.aggregate);
     //   break;
-    // case KOOPA_RVT_GET_ELEM_PTR:
-    //   // Visit(kind.data.get_elem_ptr);
-    //   // writeTo(value, "t0");
-    //   break;
-    // case KOOPA_RVT_GET_PTR:
-    //   // Visit(kind.data.get_ptr);
-    //   // writeTo(value, "t0");
-    //   break;
+    case KOOPA_RVT_GET_ELEM_PTR:
+      Visit(kind.data.get_elem_ptr);
+      writeTo(value, "t0");
+      break;
+    case KOOPA_RVT_GET_PTR:
+      Visit(kind.data.get_ptr);
+      writeTo(value, "t0");
+      break;
     default:
       // 其他类型暂时遇不到
       cout<<kind.tag<<endl;
