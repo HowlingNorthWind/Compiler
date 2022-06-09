@@ -38,6 +38,8 @@ map<string, string> funcTable;
 map<string, variant<int, string>> *cur_table;
 map<map<string, variant<int, string>>*,map<string, variant<int, string>>*> total_table;
 
+map<string, int> *cur_array_dims_table;
+map<map<string, int>*, map<string, int>*> total_array_dims_table;
 
 
 
