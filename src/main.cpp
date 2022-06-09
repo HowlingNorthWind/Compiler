@@ -238,10 +238,10 @@ void Visit(const koopa_raw_function_t &func) {
           }else if(bbInst->ty->tag == KOOPA_RTT_ARRAY){
             auto targetArray = bbInst->ty->data.array;
             int arraySize = targetArray.len;
-            // while(targetArray.base->tag == KOOPA_RTT_ARRAY){
-            //   targetArray = targetArray.base->data.array;
-            //   arraySize *= targetArray.len;
-            // }
+            while(targetArray.base->tag == KOOPA_RTT_ARRAY){
+              targetArray = targetArray.base->data.array;
+              arraySize *= targetArray.len;
+            }
             if(targetArray.base->tag != KOOPA_RTT_INT32){
               assert(false);
             }
@@ -282,10 +282,10 @@ void Visit(const koopa_raw_function_t &func) {
           }else if(bbInst->ty->tag == KOOPA_RTT_ARRAY){
             auto targetArray = bbInst->ty->data.array;
             int arraySize = targetArray.len;
-            // while(targetArray.base->tag == KOOPA_RTT_ARRAY){
-            //   targetArray = targetArray.base->data.array;
-            //   arraySize *= targetArray.len;
-            // }
+            while(targetArray.base->tag == KOOPA_RTT_ARRAY){
+              targetArray = targetArray.base->data.array;
+              arraySize *= targetArray.len;
+            }
             if(targetArray.base->tag != KOOPA_RTT_INT32){
               assert(false);
             }
