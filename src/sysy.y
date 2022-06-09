@@ -635,7 +635,6 @@ UnaryExp
     ast->val = $1->val;
     cout<<"UnaryExp"<<endl;
     cout<<ast->val<<endl;
-    ast->is_ident = false;
     ast->isint = $1->isint;
     ast->son.push_back($1);
     $$ = ast;
@@ -646,7 +645,6 @@ UnaryExp
     ast->unaryexp = unique_ptr<BaseAST>($2);
     ast->son.push_back($1);
     ast->son.push_back($2);
-    ast->is_ident = false;
     if($1->son[0]->op == '-'){
       ast->val = 0 - ($2->val);
     } else if($1->son[0]->op == '!'){
