@@ -712,6 +712,8 @@ class UnaryExp : public BaseAST {
     std::string tmp1;
     std::string tmp2;
     if(is_ident == true){
+      std::cout<<"isIdent"<<std::endl;
+      std::cout<<ident<<std::endl;
       std::string regForFun;
       if(funcTable[ident] == "int"){
         std::cout<<"UNARY FUNC INT"<<std::endl;
@@ -1078,7 +1080,11 @@ class UnaryExp : public BaseAST {
       }else
       {
         std::cout<<"wrong_op_type"<<std::endl;
+        assert(false);
       }
+    }else{
+      std::cout<<"unaryExp type Error"<<std::endl;
+      assert(false);
     }
     return tmp1;
   }
@@ -1253,9 +1259,14 @@ class AddExp : public BaseAST {
           str0 += "sub";
         }
         str0 += ' ';
-        str0 += tmp2.c_str();
+        str0 += tmp2;
         str0 += ", ";
-        str0 += tmp3.c_str();
+        str0 += tmp3;
+
+        //std::cout<<str0<<std::endl;
+        // std::cout<<tmp2<<std::endl;
+        // std::cout<<tmp3<<std::endl;
+        // assert(false);
         str0 += "\n";
         // std::cout<<str0<<std::endl;
       }else
@@ -2472,6 +2483,8 @@ class VarDef: public BaseAST {
         for(auto iter = initValArray.begin(); iter != initValArray.end(); iter++){
           std::cout<<*iter<<std::endl;
         }
+        
+        // assert(false);
 
         getElemPtr(tmp, constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
         std::cout<<str0<<std::endl;
@@ -2558,13 +2571,26 @@ class InitVal: public BaseAST {
   std::string retvaltmp(std::string& str0) override  {
     std::string tmp = son[0]->retvaltmp(str0);
     val = son[0]->val;
-    return tmp;
+    std::string tmpval = std::to_string(son[0]->val);
+    return tmpval;
   }
   std::vector<std::string> getInitValArray(std::vector<std::string>& resVec, std::vector<int>& dims, std::vector<int>& numsForDims, int allnum, std::string& str0) override
   {
     if(isArray == false){
       std::string tmp = son[0]->retvaltmp(str0);
-      resVec.push_back(tmp);
+      val = son[0]->val;
+      std::string tmpval = std::to_string(son[0]->val);
+      resVec.push_back(tmpval);
+
+      // if(son[0]->type == _Exp){
+      //   std::cout<<"type: _Exp"<<std::endl;
+      //   std::cout<<son[0]->val<<std::endl;
+      // }
+      // std::cout<<"?"<<std::endl;
+      // for(auto iter = resVec.begin(); iter != resVec.end(); iter++){
+      //   std::cout<<*iter<<std::endl;
+      // }
+      // assert(false);
     }
     if(son.size() == 0){
       int curIndex = resVec.size();
