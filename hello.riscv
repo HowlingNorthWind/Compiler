@@ -1,6 +1,7 @@
  .data
  .global arr_1
 arr_1:
+ .zero 262144
   .text 
   .global main
 main:
