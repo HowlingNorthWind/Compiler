@@ -355,7 +355,7 @@ void Visit(const koopa_raw_value_t &value) {
       break;
     case KOOPA_RVT_STORE:
       // 访问 integer 指令
-      cout<<"KOOPA_RVT_STORE"<<endl;
+      // cout<<"KOOPA_RVT_STORE"<<endl;
       Visit(kind.data.store);
       // writeTo(value);
       break;
@@ -370,7 +370,7 @@ void Visit(const koopa_raw_value_t &value) {
       break;
     case KOOPA_RVT_ALLOC:
 
-      cout<<"KOOPA_RVT_ALLOC"<<endl;
+      // cout<<"KOOPA_RVT_ALLOC"<<endl;
       
       break;
     case KOOPA_RVT_BRANCH:
@@ -496,11 +496,11 @@ void Visit(const koopa_raw_call_t &call) {
 }
 
 void Visit(const koopa_raw_func_arg_ref_t &funcArgRef) {
-  cout<<"Index"<<funcArgRef.index<<endl;
+  // cout<<"Index"<<funcArgRef.index<<endl;
 }
 
 void Visit(const koopa_raw_global_alloc_t &myGlobalAlloc) {
-  cout<<myGlobalAlloc.init->kind.tag<<endl;
+  // cout<<myGlobalAlloc.init->kind.tag<<endl;
   if(myGlobalAlloc.init->kind.tag == KOOPA_RVT_INTEGER){
     strForRISCV += " .word "+to_string(myGlobalAlloc.init->kind.data.integer.value)+"\n";
   }else if(myGlobalAlloc.init->kind.tag == KOOPA_RVT_ZERO_INIT){
@@ -526,7 +526,7 @@ void Visit(const koopa_raw_aggregate_t &myAggregate) {
 void Visit(const koopa_raw_get_elem_ptr_t &myGetElemPtr) {
   
   // cout<<strForRISCV<<endl;
-  cout<<myGetElemPtr.src->ty->tag<<endl;
+  // cout<<myGetElemPtr.src->ty->tag<<endl;
   if(myGetElemPtr.src->ty->tag != KOOPA_RTT_POINTER){
     assert(false);
   }
@@ -540,7 +540,7 @@ void Visit(const koopa_raw_get_elem_ptr_t &myGetElemPtr) {
     auto srcArray = srcPtr.base->data.array;
     // sizeOfPtr *= srcArray.len;
     // cout<<"srcArray.len"<<srcArray.len<<endl;
-    cout<<srcArray.base->tag<<endl;
+    // cout<<srcArray.base->tag<<endl;
     while(srcArray.base->tag != KOOPA_RTT_INT32){
       if(srcArray.base->tag != KOOPA_RTT_ARRAY){
         assert(false);
@@ -606,7 +606,7 @@ void Visit(const koopa_raw_get_elem_ptr_t &myGetElemPtr) {
 void Visit(const koopa_raw_get_ptr_t &myGetPtr) {
   
   // cout<<strForRISCV<<endl;
-  cout<<myGetPtr.src->ty->tag<<endl;
+  // cout<<myGetPtr.src->ty->tag<<endl;
   if(myGetPtr.src->ty->tag != KOOPA_RTT_POINTER){
     assert(false);
   }
@@ -620,7 +620,7 @@ void Visit(const koopa_raw_get_ptr_t &myGetPtr) {
     auto srcArray = srcPtr.base->data.array;
     // sizeOfPtr *= srcArray.len;
     // cout<<"srcArray.len"<<srcArray.len<<endl;
-    cout<<srcArray.base->tag<<endl;
+    // cout<<srcArray.base->tag<<endl;
     while(srcArray.base->tag != KOOPA_RTT_INT32){
       if(srcArray.base->tag != KOOPA_RTT_ARRAY){
         assert(false);
@@ -773,9 +773,9 @@ void Visit(const koopa_raw_binary_t &binary) {
 }
 
 void Visit(const koopa_raw_store_t &rawStore) {
-  cout<<"rawStore"<<endl;
+  // cout<<"rawStore"<<endl;
   // cout<<rawStore.dest->kind.tag<<endl;
-  cout<<rawStore.value->kind.tag<<endl;
+  // cout<<rawStore.value->kind.tag<<endl;
   if(rawStore.value->kind.tag == KOOPA_RVT_FUNC_ARG_REF){
       int myIndex = rawStore.value->kind.data.func_arg_ref.index;
       if(myIndex < 8){
@@ -803,7 +803,7 @@ void Visit(const koopa_raw_load_t &load) {
 }
 
 void Visit(const koopa_raw_integer_t &integer) {
-  cout<<integer.value<<endl;
+  // cout<<integer.value<<endl;
   // strForRISCV += " .word "+to_string(integer.value)+'\n';
 }
 
@@ -836,7 +836,7 @@ int main(int argc, const char *argv[]) {
   auto input = argv[2];
   auto output = argv[4];
 
-  cout<<"mode"<<mode<<endl;
+  // cout<<"mode"<<mode<<endl;
   // 打开输入文件, 并且指定 lexer 在解析的时候读取这个文件
   yyin = fopen(input, "r");
   assert(yyin);
@@ -853,24 +853,24 @@ int main(int argc, const char *argv[]) {
   // dump AST
   // if(mode == )
   
-  cout<<"BEGIN KOOPA IR"<<endl;
+  // cout<<"BEGIN KOOPA IR"<<endl;
   ast->Dump(str0);
-  cout << endl;
+  // cout << endl;
 
   //得到str，即KoopaIR
-  cout<< str0 <<endl;
+  // cout<< str0 <<endl;
   const char* str = str0.c_str();
 
-  cout<<"mode"<<endl;
-  cout<<mode<<endl;
-  cout<<str<<endl;
+  // cout<<"mode"<<endl;
+  // cout<<mode<<endl;
+  // cout<<str<<endl;
   if(strcmp(mode,"-koopa") == 0)
   {
-    cout<<"yyout"<<endl;
+    // cout<<"yyout"<<endl;
     for(int i=0; i <strlen(str); i++)
     {
       char c = str[i];
-      cout<<c;
+      // cout<<c;
       if(c=='%')
       {
         fprintf(yyout,"%%");
@@ -896,7 +896,7 @@ int main(int argc, const char *argv[]) {
   // ...
   if(strcmp(mode,"-riscv") == 0)
   {
-    cout<<"riscv-out"<<endl;
+    // cout<<"riscv-out"<<endl;
     Visit(raw);
   }
 
