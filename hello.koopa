@@ -6,64 +6,60 @@ decl @putch(i32)
 decl @putarray(i32, *i32)
 decl @starttime()
 decl @stoptime()
-global @n_1 = alloc i32, zeroinit
-fun @QuickSort(@arr: *i32, @low: i32, @high: i32): i32 { 
+global @buf_1 = alloc [[i32, 100], 2], zeroinit
+fun @merge_sort(@l: i32, @r: i32) { 
 %entry:
- @arr_2 = alloc *i32
- store @arr, @arr_2
- @low_2 = alloc i32
- store @low, @low_2
- @high_2 = alloc i32
- store @high, @high_2
- %1 = load @low_2
- %2 = load @high_2
- %0 = lt %1, %2
+ @l_2 = alloc i32
+ store @l, @l_2
+ @r_2 = alloc i32
+ store @r, @r_2
+ %1 = load @l_2
+ %2 = add %1, 1
+ %3 = load @r_2
+ %0 = ge %2, %3
  br %0, %then0, %end0
 %then0:
- @i_4 = alloc i32
- store 0, @i_4
+ ret 0
+%0:
+ jump %end0
+%end0:
+ @mid_3 = alloc i32
+ %4 = load @l_2
+ %5 = load @r_2
+ %6 = add %4, %5
+ %7 = div %6, 2
+ store %7, @mid_3
 
- %3 = load @low_2
- store %3, @i_4
+ %8 = load @l_2
+ %9 = load @mid_3
+ call @merge_sort(%8, %9)
+ %10 = load @mid_3
+ %11 = load @r_2
+ call @merge_sort(%10, %11)
+ @i_3 = alloc i32
+ %12 = load @l_2
+ store %12, @i_3
 
- @j_4 = alloc i32
- store 0, @j_4
+ @j_3 = alloc i32
+ %13 = load @mid_3
+ store %13, @j_3
 
- %4 = load @high_2
- store %4, @j_4
-
- @k_4 = alloc i32
- store 0, @k_4
-
- %5 = load @arr_2
- %7 = load @low_2
- %6 = getptr %5, %7
- %8 = load %6
- store %8, @k_4
+ @k_3 = alloc i32
+ %14 = load @l_2
+ store %14, @k_3
 
  jump %while_entry0
 %while_entry0:
- %10 = load @i_4
- %11 = load @j_4
- %9 = lt %10, %11
- br %9, %while_body0, %while_end0
-%while_body0:
- jump %while_entry1
-%while_entry1:
 @land_res_0 = alloc i32
- %13 = load @i_4
- %14 = load @j_4
- %12 = lt %13, %14
- br %12, %land_0_0, %end_land_zero0
+ %16 = load @i_3
+ %17 = load @mid_3
+ %15 = lt %16, %17
+ br %15, %land_0_0, %end_land_zero0
 %land_0_0:
- %16 = load @arr_2
- %18 = load @j_4
- %17 = getptr %16, %18
- %19 = load %17
- %20 = load @k_4
- %21 = sub %20, 1
- %15 = gt %19, %21
- br %15, %land_0_2, %end_land_zero0
+ %19 = load @j_3
+ %20 = load @r_2
+ %18 = lt %19, %20
+ br %18, %land_0_2, %end_land_zero0
 %land_0_2:
  %land_res_1_0 = add 0, 1
  store %land_res_1_0, @land_res_0
@@ -74,228 +70,140 @@ fun @QuickSort(@arr: *i32, @low: i32, @high: i32): i32 {
  jump %land_end_0
 %land_end_0:
  %ans_land_0 = load@land_res_0
- br %ans_land_0, %while_body1, %while_end1
-%while_body1:
- %22 = load @j_4
- %23 = sub %22, 1
- store %23, @j_4
-
-
- jump %while_entry1
-%while_end1:
- %25 = load @i_4
- %26 = load @j_4
- %24 = lt %25, %26
- br %24, %then1, %end1
+ br %ans_land_0, %while_body0, %while_end0
+%while_body0:
+ %22 = getelemptr @buf_1, 0
+ %23 = load @i_3
+ %24 = getelemptr %22, %23
+ %25 = load %24
+ %26 = getelemptr @buf_1, 0
+ %27 = load @j_3
+ %28 = getelemptr %26, %27
+ %29 = load %28
+ %21 = lt %25, %29
+ br %21, %then1, %else1
 %then1:
- %27 = load @arr_2
- %29 = load @j_4
- %28 = getptr %27, %29
- %30 = load %28
- %31 = load @arr_2
- %33 = load @i_4
- %32 = getptr %31, %33
- store %30, %32
+ %30 = getelemptr @buf_1, 0
+ %31 = load @i_3
+ %32 = getelemptr %30, %31
+ %33 = load %32
+ %34 = getelemptr @buf_1, 1
+ %35 = load @k_3
+ %36 = getelemptr %34, %35
+ store %33, %36
 
- %34 = load @i_4
- %35 = add %34, 1
- store %35, @i_4
+ %37 = load @i_3
+ %38 = add %37, 1
+ store %38, @i_3
+
+
+ jump %end1
+%else1:
+ %39 = getelemptr @buf_1, 0
+ %40 = load @j_3
+ %41 = getelemptr %39, %40
+ %42 = load %41
+ %43 = getelemptr @buf_1, 1
+ %44 = load @k_3
+ %45 = getelemptr %43, %44
+ store %42, %45
+
+ %46 = load @j_3
+ %47 = add %46, 1
+ store %47, @j_3
 
 
  jump %end1
 %end1:
+ %48 = load @k_3
+ %49 = add %48, 1
+ store %49, @k_3
+
+
+ jump %while_entry0
+%while_end0:
+ jump %while_entry1
+%while_entry1:
+ %51 = load @i_3
+ %52 = load @mid_3
+ %50 = lt %51, %52
+ br %50, %while_body1, %while_end1
+%while_body1:
+ %53 = getelemptr @buf_1, 0
+ %54 = load @i_3
+ %55 = getelemptr %53, %54
+ %56 = load %55
+ %57 = getelemptr @buf_1, 1
+ %58 = load @k_3
+ %59 = getelemptr %57, %58
+ store %56, %59
+
+ %60 = load @i_3
+ %61 = add %60, 1
+ store %61, @i_3
+
+ %62 = load @k_3
+ %63 = add %62, 1
+ store %63, @k_3
+
+
+ jump %while_entry1
+%while_end1:
  jump %while_entry2
 %while_entry2:
-@land_res_1 = alloc i32
- %37 = load @i_4
- %38 = load @j_4
- %36 = lt %37, %38
- br %36, %land_1_0, %end_land_zero1
-%land_1_0:
- %40 = load @arr_2
- %42 = load @i_4
- %41 = getptr %40, %42
- %43 = load %41
- %44 = load @k_4
- %39 = lt %43, %44
- br %39, %land_1_2, %end_land_zero1
-%land_1_2:
- %land_res_1_1 = add 0, 1
- store %land_res_1_1, @land_res_1
- jump %land_end_1
-%end_land_zero1:
- %land_res_2_1 = add 0, 0
- store %land_res_2_1, @land_res_1
- jump %land_end_1
-%land_end_1:
- %ans_land_1 = load@land_res_1
- br %ans_land_1, %while_body2, %while_end2
+ %65 = load @j_3
+ %66 = load @r_2
+ %64 = lt %65, %66
+ br %64, %while_body2, %while_end2
 %while_body2:
- %45 = load @i_4
- %46 = add %45, 1
- store %46, @i_4
+ %67 = getelemptr @buf_1, 0
+ %68 = load @j_3
+ %69 = getelemptr %67, %68
+ %70 = load %69
+ %71 = getelemptr @buf_1, 1
+ %72 = load @k_3
+ %73 = getelemptr %71, %72
+ store %70, %73
+
+ %74 = load @j_3
+ %75 = add %74, 1
+ store %75, @j_3
+
+ %76 = load @k_3
+ %77 = add %76, 1
+ store %77, @k_3
 
 
  jump %while_entry2
 %while_end2:
- %48 = load @i_4
- %49 = load @j_4
- %47 = lt %48, %49
- br %47, %then2, %end2
-%then2:
- %50 = load @arr_2
- %52 = load @i_4
- %51 = getptr %50, %52
- %53 = load %51
- %54 = load @arr_2
- %56 = load @j_4
- %55 = getptr %54, %56
- store %53, %55
-
- %57 = load @j_4
- %58 = sub %57, 1
- store %58, @j_4
-
-
- jump %end2
-%end2:
-
- jump %while_entry0
-%while_end0:
- %59 = load @k_4
- %60 = load @arr_2
- %62 = load @i_4
- %61 = getptr %60, %62
- store %59, %61
-
- @tmp_4 = alloc i32
- store 0, @tmp_4
-
- %63 = load @i_4
- %64 = sub %63, 1
- store %64, @tmp_4
-
- %66 = load @arr_2
- %67 = getptr %66, 0
- %68 = load @low_2
- %69 = load @tmp_4
- %65 = call @QuickSort(%67, %68, %69)
- store %65, @tmp_4
-
- %70 = load @i_4
- %71 = add %70, 1
- store %71, @tmp_4
-
- %73 = load @arr_2
- %74 = getptr %73, 0
- %75 = load @tmp_4
- %76 = load @high_2
- %72 = call @QuickSort(%74, %75, %76)
- store %72, @tmp_4
-
-
- jump %end0
-%end0:
- ret 0
-}
-fun @main(): i32 { 
-%entry:
- store 10, @n_1
-
- @a_3 = alloc [i32, 10]
- %77 = getelemptr @a_3, 0
- store 0, %77
- %78 = getelemptr @a_3, 1
- store 0, %78
- %79 = getelemptr @a_3, 2
- store 0, %79
- %80 = getelemptr @a_3, 3
- store 0, %80
- %81 = getelemptr @a_3, 4
- store 0, %81
- %82 = getelemptr @a_3, 5
- store 0, %82
- %83 = getelemptr @a_3, 6
- store 0, %83
- %84 = getelemptr @a_3, 7
- store 0, %84
- %85 = getelemptr @a_3, 8
- store 0, %85
- %86 = getelemptr @a_3, 9
- store 0, %86
- %87 = getelemptr @a_3, 0
- store 4, %87
-
- %88 = getelemptr @a_3, 1
- store 3, %88
-
- %89 = getelemptr @a_3, 2
- store 9, %89
-
- %90 = getelemptr @a_3, 3
- store 2, %90
-
- %91 = getelemptr @a_3, 4
- store 0, %91
-
- %92 = getelemptr @a_3, 5
- store 1, %92
-
- %93 = getelemptr @a_3, 6
- store 6, %93
-
- %94 = getelemptr @a_3, 7
- store 5, %94
-
- %95 = getelemptr @a_3, 8
- store 7, %95
-
- %96 = getelemptr @a_3, 9
- store 8, %96
-
- @i_3 = alloc i32
- store 0, @i_3
-
- store 0, @i_3
-
- @tmp_3 = alloc i32
- store 0, @tmp_3
-
- store 9, @tmp_3
-
- %98 = getelemptr @a_3, 0
- %99 = load @i_3
- %100 = load @tmp_3
- %97 = call @QuickSort(%98, %99, %100)
- store %97, @i_3
-
  jump %while_entry3
 %while_entry3:
- %102 = load @i_3
- %103 = load @n_1
- %101 = lt %102, %103
- br %101, %while_body3, %while_end3
+ %79 = load @l_2
+ %80 = load @r_2
+ %78 = lt %79, %80
+ br %78, %while_body3, %while_end3
 %while_body3:
- @tmp_4 = alloc i32
- store 6571312, @tmp_4
+ %81 = getelemptr @buf_1, 1
+ %82 = load @l_2
+ %83 = getelemptr %81, %82
+ %84 = load %83
+ %85 = getelemptr @buf_1, 0
+ %86 = load @l_2
+ %87 = getelemptr %85, %86
+ store %84, %87
 
- %104 = load @i_3
- %105 = getelemptr @a_3, %104
- %106 = load %105
- store %106, @tmp_4
-
- %107 = load @tmp_4
- call @putint(%107)
- store 10, @tmp_4
-
- %108 = load @tmp_4
- call @putch(%108)
- %109 = load @i_3
- %110 = add %109, 1
- store %110, @i_3
+ %88 = load @l_2
+ %89 = add %88, 1
+ store %89, @l_2
 
 
  jump %while_entry3
 %while_end3:
- ret 0
+
+ ret 
 }
+fun @main(): i32 { 
+%entry:
+ @n_3 = alloc i32
+ %91 = getelemptr @buf_1, 0
+ %92 
