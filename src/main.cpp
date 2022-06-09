@@ -398,7 +398,7 @@ void Visit(const koopa_raw_value_t &value) {
       break;
     case KOOPA_RVT_AGGREGATE:
       // Visit(kind.data.aggregate);
-      // break;
+      break;
     case KOOPA_RVT_GET_ELEM_PTR:
       // Visit(kind.data.get_elem_ptr);
       // writeTo(value, "t0");
@@ -505,6 +505,7 @@ void Visit(const koopa_raw_global_alloc_t &myGlobalAlloc) {
   }else if(myGlobalAlloc.init->kind.tag == KOOPA_RVT_ZERO_INIT){
     Visit(myGlobalAlloc.init);
   }else if(myGlobalAlloc.init->kind.tag == KOOPA_RVT_AGGREGATE){
+    assert(false);
     Visit(myGlobalAlloc.init);
   }
   else{
