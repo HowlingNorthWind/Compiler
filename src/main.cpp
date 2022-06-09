@@ -803,7 +803,7 @@ void Visit(const koopa_raw_load_t &load) {
 
 void Visit(const koopa_raw_integer_t &integer) {
   cout<<integer.value<<endl;
-  strForRISCV += " .word "+to_string(integer.value)+'\n';
+  // strForRISCV += " .word "+to_string(integer.value)+'\n';
 }
 
 int retValue(const koopa_raw_value_t &rawValue){
