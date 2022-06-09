@@ -632,6 +632,7 @@ Number
 UnaryExp 
   : PrimaryExp{
     auto ast = new UnaryExp();
+    ast->is_ident = false;
     ast->val = $1->val;
     cout<<"UnaryExp"<<endl;
     cout<<ast->val<<endl;
@@ -641,6 +642,7 @@ UnaryExp
   }
   | UnaryOp UnaryExp{
     auto ast = new UnaryExp();
+    ast->is_ident = false;
     ast->unaryop = unique_ptr<BaseAST>($1);
     ast->unaryexp = unique_ptr<BaseAST>($2);
     ast->son.push_back($1);
