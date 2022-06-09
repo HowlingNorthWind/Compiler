@@ -66,7 +66,9 @@ void Visit(const koopa_raw_branch_t &branch);
 void Visit(const koopa_raw_call_t &call);
 void Visit(const koopa_raw_func_arg_ref_t &funcArgRef);
 void Visit(const koopa_raw_global_alloc_t &myGlobalAlloc);
-
+void Visit(const koopa_raw_aggregate_t &myAggregate) ;
+void Visit(const koopa_raw_get_elem_ptr_t &myGetElemPtr);
+void Visit(const koopa_raw_get_ptr_t &myGetPtr);
 
 int retValue(const koopa_raw_value_t &rawValue);
 int retValue(const koopa_raw_integer_t &rawInterger);
@@ -75,6 +77,7 @@ void myEpilogue(const koopa_raw_function_t &func);
 void myPrologue(const koopa_raw_function_t &func);
 
 void myPrintGlobalVar(const koopa_raw_value_t &value);
+void myInitArray(const koopa_raw_value_t &value);
 
 void writeTo(const koopa_raw_value_t &value, string srcReg){
   cout<<"raw_Value"<<endl;
@@ -229,7 +232,25 @@ void Visit(const koopa_raw_function_t &func) {
           // cout<<spForEachInst<<endl;
           // cout<<bbInst<<endl;
           // stackForInsts[bbInst] = spForEachInst;
-          spForEachInst += 4;
+
+          if(bbInst->ty->tag != KOOPA_RTT_ARRAY){
+            spForEachInst += 4;
+          }else if(bbInst->ty->tag == KOOPA_RTT_ARRAY){
+            auto targetArray = bbInst->ty->data.array;
+            int arraySize = targetArray.len;
+            while(targetArray.base->tag == KOOPA_RTT_ARRAY){
+              targetArray = targetArray.base->data.array;
+              arraySize *= targetArray.len;
+            }
+            if(targetArray.base->tag != KOOPA_RTT_INT32){
+              assert(false);
+            }
+            arraySize *= 4;
+            spForEachInst += arraySize;
+
+          }
+
+          
         }
         if(bbInst->kind.tag == KOOPA_RVT_CALL){
           if(spForRa == 0){
@@ -256,7 +277,21 @@ void Visit(const koopa_raw_function_t &func) {
         koopa_raw_value_t bbInst = reinterpret_cast<koopa_raw_value_t>(ptr);
         if(bbInst->ty->tag != KOOPA_RTT_UNIT){
           stackForInsts[bbInst] = spForFuncParams+specialSpForEachInst;
-          specialSpForEachInst += 4;
+          if(bbInst->ty->tag != KOOPA_RTT_ARRAY){
+            specialSpForEachInst += 4;
+          }else if(bbInst->ty->tag == KOOPA_RTT_ARRAY){
+            auto targetArray = bbInst->ty->data.array;
+            int arraySize = targetArray.len;
+            while(targetArray.base->tag == KOOPA_RTT_ARRAY){
+              targetArray = targetArray.base->data.array;
+              arraySize *= targetArray.len;
+            }
+            if(targetArray.base->tag != KOOPA_RTT_INT32){
+              assert(false);
+            }
+            arraySize *= 4;
+            specialSpForEachInst += arraySize;
+          }
         }
       }
   }
@@ -356,10 +391,25 @@ void Visit(const koopa_raw_value_t &value) {
       Visit(kind.data.global_alloc);
       break;
     case KOOPA_RVT_ZERO_INIT:
-      strForRISCV += " .zero 4\n";
+     
+   
+      myInitArray(value);
+      
+      break;
+    case KOOPA_RVT_AGGREGATE:
+      Visit(kind.data.aggregate);
+      break;
+    case KOOPA_RVT_GET_ELEM_PTR:
+      Visit(kind.data.get_elem_ptr);
+      writeTo(value, "t0");
+      break;
+    case KOOPA_RVT_GET_PTR:
+      Visit(kind.data.get_ptr);
+      writeTo(value, "t0");
       break;
     default:
       // 其他类型暂时遇不到
+      cout<<kind.tag<<endl;
       assert(false);
   }
 }
@@ -372,6 +422,34 @@ void myPrintGlobalVar(const koopa_raw_value_t &value){
   strForRISCV += myGlobalName+":\n";
 }
 
+
+void myInitArray(const koopa_raw_value_t &value){
+
+  strForRISCV += " .zero ";
+
+  if(value->ty->tag == KOOPA_RTT_INT32){
+    strForRISCV += "4";
+  }else if(value->ty->tag == KOOPA_RTT_ARRAY){
+    auto curArray = value->ty->data.array;
+    int sizeOfArray = curArray.len;
+    while(curArray.base->tag == KOOPA_RTT_ARRAY){
+      sizeOfArray *= curArray.base->data.array.len;
+      curArray = curArray.base->data.array;
+    }
+    sizeOfArray *= 4;
+    strForRISCV += to_string(sizeOfArray);
+  }
+  
+
+  
+
+
+  strForRISCV += "\n";
+
+  // cout<<strForRISCV<<endl;
+  // assert(false);
+  
+}
 // 访问对应类型指令的函数定义略
 // 视需求自行实现
 // ...
@@ -426,12 +504,171 @@ void Visit(const koopa_raw_global_alloc_t &myGlobalAlloc) {
     strForRISCV += " .word "+to_string(myGlobalAlloc.init->kind.data.integer.value)+"\n";
   }else if(myGlobalAlloc.init->kind.tag == KOOPA_RVT_ZERO_INIT){
     Visit(myGlobalAlloc.init);
-  }else{
+  }else if(myGlobalAlloc.init->kind.tag == KOOPA_RVT_AGGREGATE){
+    Visit(myGlobalAlloc.init);
+  }
+  else{
+    std::cout<<myGlobalAlloc.init->kind.tag<<std::endl;
     assert(false);
   
   }
 
 }
+
+void Visit(const koopa_raw_aggregate_t &myAggregate) {
+  Visit(myAggregate.elems);
+  cout<<strForRISCV<<endl;
+  // assert(false);
+}
+
+void Visit(const koopa_raw_get_elem_ptr_t &myGetElemPtr) {
+  
+  cout<<strForRISCV<<endl;
+  cout<<myGetElemPtr.src->ty->tag<<endl;
+  if(myGetElemPtr.src->ty->tag != KOOPA_RTT_POINTER){
+    assert(false);
+  }
+  auto srcPtr = myGetElemPtr.src->ty->data.pointer;
+  
+  int sizeOfPtr = 1;
+  
+  if(srcPtr.base->tag == KOOPA_RTT_INT32){
+    sizeOfPtr *= 4;
+  }else{
+    auto srcArray = srcPtr.base->data.array;
+    // sizeOfPtr *= srcArray.len;
+    // cout<<"srcArray.len"<<srcArray.len<<endl;
+    cout<<srcArray.base->tag<<endl;
+    while(srcArray.base->tag != KOOPA_RTT_INT32){
+      if(srcArray.base->tag != KOOPA_RTT_ARRAY){
+        assert(false);
+      }
+      sizeOfPtr *= srcArray.base->data.array.len;
+      // cout<<"srcArray.base->data.array.len"<<srcArray.base->data.array.len<<endl;
+      srcArray = srcArray.base->data.array;
+    }
+    sizeOfPtr *= 4;
+  }
+  
+  // if(myGetElemPtr.index->kind.tag != KOOPA_RVT_INTEGER){
+  //   assert(false);
+  // }
+
+  // int index = myGetElemPtr.index->kind.data.integer.value;
+
+
+  // readFrom(myGetElemPtr.src, "t0");
+
+  // strForRISCV += " li t1, "+to_string(index)+'\n';
+  // strForRISCV += " li t2, "+to_string(sizeOfPtr)+'\n';
+  // strForRISCV += " mul t1, t1, t2\n";
+  // strForRISCV += " add t0, t0, t1\n";
+
+  if(myGetElemPtr.index->kind.tag != KOOPA_RVT_INTEGER){
+    cout<<strForRISCV<<endl;
+
+    readFrom(myGetElemPtr.src, "t0");
+
+    assert(stackForInsts.find(myGetElemPtr.index)!= stackForInsts.end()); 
+
+    strForRISCV += " lw t1, ";
+    strForRISCV += to_string(stackForInsts[myGetElemPtr.index]);
+    strForRISCV += "(sp)\n";
+
+    // strForRISCV += " li t1, "+to_string(index)+'\n';
+    strForRISCV += " li t2, "+to_string(sizeOfPtr)+'\n';
+    strForRISCV += " mul t1, t1, t2\n";
+    strForRISCV += " add t0, t0, t1\n";
+
+    // assert(false);
+  }else if(myGetElemPtr.index->kind.tag == KOOPA_RVT_INTEGER){
+    int index = myGetElemPtr.index->kind.data.integer.value;
+
+
+    readFrom(myGetElemPtr.src, "t0");
+
+    strForRISCV += " li t1, "+to_string(index)+'\n';
+    strForRISCV += " li t2, "+to_string(sizeOfPtr)+'\n';
+    strForRISCV += " mul t1, t1, t2\n";
+    strForRISCV += " add t0, t0, t1\n";
+  }
+
+  // cout<<strForRISCV<<endl;
+  // cout<<"sizeOfPtr"<<sizeOfPtr<<endl;
+  // assert(false);
+
+
+}
+
+
+void Visit(const koopa_raw_get_ptr_t &myGetPtr) {
+  
+  cout<<strForRISCV<<endl;
+  cout<<myGetPtr.src->ty->tag<<endl;
+  if(myGetPtr.src->ty->tag != KOOPA_RTT_POINTER){
+    assert(false);
+  }
+  auto srcPtr = myGetPtr.src->ty->data.pointer;
+  
+  int sizeOfPtr = 1;
+  
+  if(srcPtr.base->tag == KOOPA_RTT_INT32){
+    sizeOfPtr *= 4;
+  }else{
+    auto srcArray = srcPtr.base->data.array;
+    // sizeOfPtr *= srcArray.len;
+    // cout<<"srcArray.len"<<srcArray.len<<endl;
+    cout<<srcArray.base->tag<<endl;
+    while(srcArray.base->tag != KOOPA_RTT_INT32){
+      if(srcArray.base->tag != KOOPA_RTT_ARRAY){
+        assert(false);
+      }
+      sizeOfPtr *= srcArray.base->data.array.len;
+      // cout<<"srcArray.base->data.array.len"<<srcArray.base->data.array.len<<endl;
+      srcArray = srcArray.base->data.array;
+    }
+    sizeOfPtr *= 4;
+  }
+  
+  if(myGetPtr.index->kind.tag != KOOPA_RVT_INTEGER){
+    cout<<strForRISCV<<endl;
+
+    readFrom(myGetPtr.src, "t0");
+
+    assert(stackForInsts.find(myGetPtr.index)!= stackForInsts.end()); 
+
+    strForRISCV += " lw t1, ";
+    strForRISCV += to_string(stackForInsts[myGetPtr.index]);
+    strForRISCV += "(sp)\n";
+
+    // strForRISCV += " li t1, "+to_string(index)+'\n';
+    strForRISCV += " li t2, "+to_string(sizeOfPtr)+'\n';
+    strForRISCV += " mul t1, t1, t2\n";
+    strForRISCV += " add t0, t0, t1\n";
+
+    // assert(false);
+  }else if(myGetPtr.index->kind.tag == KOOPA_RVT_INTEGER){
+    int index = myGetPtr.index->kind.data.integer.value;
+
+
+    readFrom(myGetPtr.src, "t0");
+
+    strForRISCV += " li t1, "+to_string(index)+'\n';
+    strForRISCV += " li t2, "+to_string(sizeOfPtr)+'\n';
+    strForRISCV += " mul t1, t1, t2\n";
+    strForRISCV += " add t0, t0, t1\n";
+  }
+
+  
+
+  // cout<<strForRISCV<<endl;
+  // cout<<"sizeOfPtr"<<sizeOfPtr<<endl;
+  // assert(false);
+
+
+}
+
+
 
 
 void Visit(const koopa_raw_branch_t &branch) {
@@ -565,6 +802,7 @@ void Visit(const koopa_raw_load_t &load) {
 
 void Visit(const koopa_raw_integer_t &integer) {
   cout<<integer.value<<endl;
+  strForRISCV += " .word "+to_string(integer.value)+'\n';
 }
 
 int retValue(const koopa_raw_value_t &rawValue){

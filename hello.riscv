@@ -1,107 +1,258 @@
- .data
- .global a_1
-a_1:
- .word 10
-  .text 
-  .global inc
-inc:
- addi sp, sp, -16
- la t0, a_1
- lw t0, 0(t0)
- sw t0, 0(sp)
-
- lw t0, 0(sp)
- li t1, 1
- add t0, t0, t1
- sw t0, 4(sp)
-
- lw t0, 4(sp)
- la t1, a_1
- sw t0, 0(t1)
- la t0, a_1
- lw t0, 0(t0)
- sw t0, 8(sp)
-
- lw a0, 8(sp)
- addi sp, sp, 16
- ret
-  .text 
-  .global print_a
-print_a:
- addi sp, sp, -16
- sw ra, 12(sp)
- la t0, a_1
- lw t0, 0(t0)
- sw t0, 0(sp)
-
- lw a0, 0(sp)
- call putint
- li a0, 10
- call putch
- lw ra, 12(sp)
- addi sp, sp, 16
- ret
   .text 
   .global main
 main:
- addi sp, sp, -48
- sw ra, 44(sp)
- li t0, 0
- sw t0, 0(sp)
-
- j while_entry0
-while_entry0:
+ addi sp, sp, -160
+ sw ra, 156(sp)
  lw t0, 0(sp)
+ li t1, 0
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
  sw t0, 4(sp)
 
- lw t0, 4(sp)
- li t1, 10
- slt t0, t0, t1
+ li t0, 0
+ sw t0, 4(sp)
+
+ lw t0, 0(sp)
+ li t1, 1
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
  sw t0, 8(sp)
 
- lw t0, 8(sp)
- bnez t0, while_body0
- j while_end0
-while_body0:
- call inc
- sw a0, 12(sp)
+ li t0, 0
+ sw t0, 8(sp)
 
- li t0, 1
+ lw t0, 0(sp)
+ li t1, 2
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 12(sp)
+
+ li t0, 0
+ sw t0, 12(sp)
+
+ lw t0, 0(sp)
+ li t1, 3
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
  sw t0, 16(sp)
 
- lw t0, 16(sp)
+ li t0, 0
+ sw t0, 16(sp)
+
+ lw t0, 0(sp)
+ li t1, 4
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
  sw t0, 20(sp)
 
- lw t0, 20(sp)
- li t1, 2
+ li t0, 0
+ sw t0, 20(sp)
+
+ lw t0, 0(sp)
+ li t1, 5
+ li t2, 4
+ mul t1, t1, t2
  add t0, t0, t1
  sw t0, 24(sp)
 
- lw t0, 24(sp)
- sw t0, 16(sp)
+ li t0, 0
+ sw t0, 24(sp)
 
- lw t0, 16(sp)
+ lw t0, 0(sp)
+ li t1, 6
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
  sw t0, 28(sp)
 
- lw a0, 28(sp)
- call putint
- li a0, 10
- call putch
- call print_a
+ li t0, 0
+ sw t0, 28(sp)
+
  lw t0, 0(sp)
+ li t1, 7
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
  sw t0, 32(sp)
 
- lw t0, 32(sp)
- li t1, 1
+ li t0, 0
+ sw t0, 32(sp)
+
+ lw t0, 0(sp)
+ li t1, 8
+ li t2, 4
+ mul t1, t1, t2
  add t0, t0, t1
  sw t0, 36(sp)
 
- lw t0, 36(sp)
- sw t0, 0(sp)
+ li t0, 0
+ sw t0, 36(sp)
+
+ lw t0, 0(sp)
+ li t1, 9
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 40(sp)
+
+ li t0, 0
+ sw t0, 40(sp)
+
+ lw t0, 0(sp)
+ li t1, 0
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 48(sp)
+
+ lw a0, 48(sp)
+ call getarray
+ sw a0, 52(sp)
+
+ lw t0, 52(sp)
+ sw t0, 44(sp)
+
+ li t0, 0
+ sw t0, 56(sp)
 
  j while_entry0
+while_entry0:
+ lw t0, 56(sp)
+ sw t0, 60(sp)
+
+ lw t0, 60(sp)
+ li t1, 10
+ slt t0, t0, t1
+ sw t0, 64(sp)
+
+ lw t0, 64(sp)
+ bnez t0, while_body0
+ j while_end0
+while_body0:
+ lw t0, 56(sp)
+ sw t0, 68(sp)
+
+ lw t0, 44(sp)
+ sw t0, 72(sp)
+
+ lw t0, 68(sp)
+ lw t1, 72(sp)
+ slt t0, t0, t1
+ sw t0, 76(sp)
+
+ lw t0, 76(sp)
+ bnez t0, then0
+ j else0
 while_end0:
+ lw t0, 44(sp)
+ sw t0, 80(sp)
+
+ lw t0, 0(sp)
+ li t1, 0
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 84(sp)
+
+ lw a0, 80(sp)
+ lw a1, 84(sp)
+ call putarray
  li a0, 0
- lw ra, 44(sp)
- addi sp, sp, 48
+ lw ra, 156(sp)
+ addi sp, sp, 160
  ret
+then0:
+ lw t0, 56(sp)
+ sw t0, 88(sp)
+
+ lw t0, 0(sp)
+ lw t1, 88(sp)
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 92(sp)
+
+ lw t0, 92(sp)
+ sw t0, 96(sp)
+
+ lw t0, 56(sp)
+ sw t0, 100(sp)
+
+ lw t0, 96(sp)
+ lw t1, 100(sp)
+ add t0, t0, t1
+ sw t0, 104(sp)
+
+ lw t0, 56(sp)
+ sw t0, 108(sp)
+
+ lw t0, 0(sp)
+ lw t1, 108(sp)
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 112(sp)
+
+ lw t0, 104(sp)
+ sw t0, 112(sp)
+
+ j end0
+else0:
+ lw t0, 56(sp)
+ sw t0, 116(sp)
+
+ lw t0, 116(sp)
+ li t1, 1
+ sub t0, t0, t1
+ sw t0, 120(sp)
+
+ lw t0, 0(sp)
+ lw t1, 120(sp)
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 124(sp)
+
+ lw t0, 124(sp)
+ sw t0, 128(sp)
+
+ lw t0, 56(sp)
+ sw t0, 132(sp)
+
+ lw t0, 128(sp)
+ lw t1, 132(sp)
+ add t0, t0, t1
+ sw t0, 136(sp)
+
+ lw t0, 56(sp)
+ sw t0, 140(sp)
+
+ lw t0, 0(sp)
+ lw t1, 140(sp)
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 144(sp)
+
+ lw t0, 136(sp)
+ sw t0, 144(sp)
+
+ j end0
+end0:
+ lw t0, 56(sp)
+ sw t0, 148(sp)
+
+ lw t0, 148(sp)
+ li t1, 1
+ add t0, t0, t1
+ sw t0, 152(sp)
+
+ lw t0, 152(sp)
+ sw t0, 56(sp)
+
+ j while_entry0
