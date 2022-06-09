@@ -93,7 +93,7 @@ void writeTo(const koopa_raw_value_t &value, string srcReg){
   }else{
       strForRISCV += " sw "+srcReg+", "+to_string(stackForInsts[value])+"(sp)\n";
       strForRISCV += "\n";
-      cout<<strForRISCV<<endl;
+      // cout<<strForRISCV<<endl;
   }
   
 }
@@ -102,10 +102,10 @@ void readFrom(const koopa_raw_value_t &value, string destReg){
   // auto instType = value->ty->tag;
   if(stackForInsts.find(value) != stackForInsts.end()){
     strForRISCV += " lw "+destReg+", "+ to_string(stackForInsts[value]) + "(sp)" + "\n";
-    cout<<strForRISCV<<endl;
+    // cout<<strForRISCV<<endl;
   }else if(value->kind.tag == KOOPA_RVT_INTEGER){
     strForRISCV += " li "+destReg+", "+ to_string(value->kind.data.integer.value) + "\n";
-    cout<<strForRISCV<<endl;
+    // cout<<strForRISCV<<endl;
   }else if(value->kind.tag == KOOPA_RVT_GLOBAL_ALLOC){
     string myGlobalName = value->name;
     myGlobalName.erase(0,1);
@@ -295,13 +295,13 @@ void Visit(const koopa_raw_function_t &func) {
         }
       }
   }
-  cout<<strForRISCV<<endl;
+  // cout<<strForRISCV<<endl;
   koopa_raw_function_t prevFunc = curFunc;
   curFunc = func;
   myPrologue(curFunc);
   Visit(func->bbs);
   curFunc = prevFunc;
-  cout<<strForRISCV<<endl;
+  // cout<<strForRISCV<<endl;
 }
 
 void myPrologue(const koopa_raw_function_t &func){
@@ -506,7 +506,7 @@ void Visit(const koopa_raw_global_alloc_t &myGlobalAlloc) {
   }else if(myGlobalAlloc.init->kind.tag == KOOPA_RVT_ZERO_INIT){
     Visit(myGlobalAlloc.init);
   }else if(myGlobalAlloc.init->kind.tag == KOOPA_RVT_AGGREGATE){
-    assert(false);
+    // assert(false);
     Visit(myGlobalAlloc.init);
   }
   else{
@@ -519,13 +519,13 @@ void Visit(const koopa_raw_global_alloc_t &myGlobalAlloc) {
 
 void Visit(const koopa_raw_aggregate_t &myAggregate) {
   Visit(myAggregate.elems);
-  cout<<strForRISCV<<endl;
+  // cout<<strForRISCV<<endl;
   // assert(false);
 }
 
 void Visit(const koopa_raw_get_elem_ptr_t &myGetElemPtr) {
   
-  cout<<strForRISCV<<endl;
+  // cout<<strForRISCV<<endl;
   cout<<myGetElemPtr.src->ty->tag<<endl;
   if(myGetElemPtr.src->ty->tag != KOOPA_RTT_POINTER){
     assert(false);
@@ -567,7 +567,7 @@ void Visit(const koopa_raw_get_elem_ptr_t &myGetElemPtr) {
   // strForRISCV += " add t0, t0, t1\n";
 
   if(myGetElemPtr.index->kind.tag != KOOPA_RVT_INTEGER){
-    cout<<strForRISCV<<endl;
+    // cout<<strForRISCV<<endl;
 
     readFrom(myGetElemPtr.src, "t0");
 
@@ -605,7 +605,7 @@ void Visit(const koopa_raw_get_elem_ptr_t &myGetElemPtr) {
 
 void Visit(const koopa_raw_get_ptr_t &myGetPtr) {
   
-  cout<<strForRISCV<<endl;
+  // cout<<strForRISCV<<endl;
   cout<<myGetPtr.src->ty->tag<<endl;
   if(myGetPtr.src->ty->tag != KOOPA_RTT_POINTER){
     assert(false);
@@ -633,7 +633,7 @@ void Visit(const koopa_raw_get_ptr_t &myGetPtr) {
   }
   
   if(myGetPtr.index->kind.tag != KOOPA_RVT_INTEGER){
-    cout<<strForRISCV<<endl;
+    // cout<<strForRISCV<<endl;
 
     readFrom(myGetPtr.src, "t0");
 
