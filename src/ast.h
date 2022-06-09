@@ -1358,11 +1358,15 @@ class MulExp : public BaseAST {
           str0 += "mul";
         }else if(son[i]->op == '/')
         {
-          val = val / son[i+1]->val;
+          if(son[i+1]->val != 0){
+            val = son[0]->val / son[i+1]->val;
+          }
           str0 += "div";
         }else if(son[i]->op == '%')
         {
-          val = val % son[i+1]->val;
+          if(son[i+1]->val != 0){
+            val = son[0]->val % son[i+1]->val;
+          }
           str0 += "mod";
         }
         str0 += " ";
