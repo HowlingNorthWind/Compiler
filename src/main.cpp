@@ -393,8 +393,8 @@ void Visit(const koopa_raw_value_t &value) {
     case KOOPA_RVT_ZERO_INIT:
      
    
-      // myInitArray(value);
-      strForRISCV += " .zero 4\n";
+      myInitArray(value);
+      // strForRISCV += " .zero 4\n";
       break;
     // case KOOPA_RVT_AGGREGATE:
     //   // Visit(kind.data.aggregate);
