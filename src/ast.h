@@ -260,12 +260,13 @@ class FuncDefAST : public BaseAST {
     block->Dump(str0);
 
     if(son[0]->func_type_all == "int"){
-       char c = str0.back();
-        while(c!= '\%'){
-          str0.pop_back();
-          c = str0.back();
-        }
-        str0.pop_back();
+      //  char c = str0.back();
+      //   while(c!= '\%'){
+      //     str0.pop_back();
+      //     c = str0.back();
+      //   }
+      //   str0.pop_back();
+      str0 += " ret 0\n";
     }else{
       str0 += " ret \n";
     }
