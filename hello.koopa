@@ -6,60 +6,27 @@ decl @putch(i32)
 decl @putarray(i32, *i32)
 decl @starttime()
 decl @stoptime()
-global @buf_1 = alloc [[i32, 100], 2], zeroinit
-fun @merge_sort(@l: i32, @r: i32) { 
+global @ints_1 = alloc [i32, 10000], zeroinit
+global @intt_1 = alloc i32, zeroinit
+global @chas_1 = alloc [i32, 10000], zeroinit
+global @chat_1 = alloc i32, zeroinit
+global @i_1 = alloc i32, 0
+global @ii_1 = alloc i32, 1
+global @c_1 = alloc i32, zeroinit
+global @get_1 = alloc [i32, 10000], zeroinit
+global @get2_1 = alloc [i32, 10000], zeroinit
+fun @isdigit(@x: i32): i32 { 
 %entry:
- @l_2 = alloc i32
- store @l, @l_2
- @r_2 = alloc i32
- store @r, @r_2
- %1 = load @l_2
- %2 = add %1, 1
- %3 = load @r_2
- %0 = ge %2, %3
- br %0, %then0, %end0
-%then0:
- ret 0
-%0:
- jump %end0
-%end0:
- @mid_3 = alloc i32
- %4 = load @l_2
- %5 = load @r_2
- %6 = add %4, %5
- %7 = div %6, 2
- store %7, @mid_3
-
- %8 = load @l_2
- %9 = load @mid_3
- call @merge_sort(%8, %9)
- %10 = load @mid_3
- %11 = load @r_2
- call @merge_sort(%10, %11)
- @i_3 = alloc i32
- %12 = load @l_2
- store %12, @i_3
-
- @j_3 = alloc i32
- %13 = load @mid_3
- store %13, @j_3
-
- @k_3 = alloc i32
- %14 = load @l_2
- store %14, @k_3
-
- jump %while_entry0
-%while_entry0:
+ @x_2 = alloc i32
+ store @x, @x_2
 @land_res_0 = alloc i32
- %16 = load @i_3
- %17 = load @mid_3
- %15 = lt %16, %17
- br %15, %land_0_0, %end_land_zero0
+ %1 = load @x_2
+ %0 = ge %1, 48
+ br %0, %land_0_0, %end_land_zero0
 %land_0_0:
- %19 = load @j_3
- %20 = load @r_2
- %18 = lt %19, %20
- br %18, %land_0_2, %end_land_zero0
+ %3 = load @x_2
+ %2 = le %3, 57
+ br %2, %land_0_2, %end_land_zero0
 %land_0_2:
  %land_res_1_0 = add 0, 1
  store %land_res_1_0, @land_res_0
@@ -70,140 +37,878 @@ fun @merge_sort(@l: i32, @r: i32) {
  jump %land_end_0
 %land_end_0:
  %ans_land_0 = load@land_res_0
- br %ans_land_0, %while_body0, %while_end0
+ br %ans_land_0, %then0, %end0
+%then0:
+ ret 1
+%0:
+ jump %end0
+%end0:
+ ret 0
+}
+fun @power(@b: i32, @a: i32): i32 { 
+%entry:
+ @b_2 = alloc i32
+ store @b, @b_2
+ @a_2 = alloc i32
+ store @a, @a_2
+ @result_3 = alloc i32
+ store 1, @result_3
+
+ jump %while_entry0
+%while_entry0:
+ %5 = load @a_2
+ %4 = ne %5, 0
+ br %4, %while_body0, %while_end0
 %while_body0:
- %22 = getelemptr @buf_1, 0
- %23 = load @i_3
- %24 = getelemptr %22, %23
- %25 = load %24
- %26 = getelemptr @buf_1, 0
- %27 = load @j_3
- %28 = getelemptr %26, %27
- %29 = load %28
- %21 = lt %25, %29
- br %21, %then1, %else1
-%then1:
- %30 = getelemptr @buf_1, 0
- %31 = load @i_3
- %32 = getelemptr %30, %31
- %33 = load %32
- %34 = getelemptr @buf_1, 1
- %35 = load @k_3
- %36 = getelemptr %34, %35
- store %33, %36
+ %6 = load @result_3
+ %7 = load @b_2
+ %8 = mul %6, %7
+ store %8, @result_3
 
- %37 = load @i_3
- %38 = add %37, 1
- store %38, @i_3
-
-
- jump %end1
-%else1:
- %39 = getelemptr @buf_1, 0
- %40 = load @j_3
- %41 = getelemptr %39, %40
- %42 = load %41
- %43 = getelemptr @buf_1, 1
- %44 = load @k_3
- %45 = getelemptr %43, %44
- store %42, %45
-
- %46 = load @j_3
- %47 = add %46, 1
- store %47, @j_3
-
-
- jump %end1
-%end1:
- %48 = load @k_3
- %49 = add %48, 1
- store %49, @k_3
+ %9 = load @a_2
+ %10 = sub %9, 1
+ store %10, @a_2
 
 
  jump %while_entry0
 %while_end0:
+ %11 = load @result_3
+ ret %11
+}
+fun @getstr(@get: *i32): i32 { 
+%entry:
+ @get_2 = alloc *i32
+ store @get, @get_2
+ @x_3 = alloc i32
+ %12 = call @getch()
+ store %12, @x_3
+
+ @length_3 = alloc i32
+ store 0, @length_3
+
  jump %while_entry1
 %while_entry1:
- %51 = load @i_3
- %52 = load @mid_3
- %50 = lt %51, %52
- br %50, %while_body1, %while_end1
+@land_res_1 = alloc i32
+ %14 = load @x_3
+ %13 = ne %14, 13
+ br %13, %land_1_0, %end_land_zero1
+%land_1_0:
+ %16 = load @x_3
+ %15 = ne %16, 10
+ br %15, %land_1_2, %end_land_zero1
+%land_1_2:
+ %land_res_1_1 = add 0, 1
+ store %land_res_1_1, @land_res_1
+ jump %land_end_1
+%end_land_zero1:
+ %land_res_2_1 = add 0, 0
+ store %land_res_2_1, @land_res_1
+ jump %land_end_1
+%land_end_1:
+ %ans_land_1 = load@land_res_1
+ br %ans_land_1, %while_body1, %while_end1
 %while_body1:
- %53 = getelemptr @buf_1, 0
- %54 = load @i_3
- %55 = getelemptr %53, %54
- %56 = load %55
- %57 = getelemptr @buf_1, 1
- %58 = load @k_3
- %59 = getelemptr %57, %58
- store %56, %59
+ %17 = load @x_3
+ %18 = load @get_2
+ %20 = load @length_3
+ %19 = getptr %18, %20
+ store %17, %19
 
- %60 = load @i_3
- %61 = add %60, 1
- store %61, @i_3
+ %21 = load @length_3
+ %22 = add %21, 1
+ store %22, @length_3
 
- %62 = load @k_3
- %63 = add %62, 1
- store %63, @k_3
+ %23 = call @getch()
+ store %23, @x_3
 
 
  jump %while_entry1
 %while_end1:
+ %24 = load @length_3
+ ret %24
+}
+fun @intpush(@x: i32) { 
+%entry:
+ @x_2 = alloc i32
+ store @x, @x_2
+ %25 = load @intt_1
+ %26 = add %25, 1
+ store %26, @intt_1
+
+ %27 = load @x_2
+ %28 = load @intt_1
+ %29 = getelemptr @ints_1, %28
+ store %27, %29
+
+
+ ret 
+}
+fun @chapush(@x: i32) { 
+%entry:
+ @x_2 = alloc i32
+ store @x, @x_2
+ %30 = load @chat_1
+ %31 = add %30, 1
+ store %31, @chat_1
+
+ %32 = load @x_2
+ %33 = load @chat_1
+ %34 = getelemptr @chas_1, %33
+ store %32, %34
+
+
+ ret 
+}
+fun @intpop(): i32 { 
+%entry:
+ %35 = load @intt_1
+ %36 = sub %35, 1
+ store %36, @intt_1
+
+ %37 = load @intt_1
+ %38 = add %37, 1
+ %39 = getelemptr @ints_1, %38
+ %40 = load %39
+ ret %40
+}
+fun @chapop(): i32 { 
+%entry:
+ %41 = load @chat_1
+ %42 = sub %41, 1
+ store %42, @chat_1
+
+ %43 = load @chat_1
+ %44 = add %43, 1
+ %45 = getelemptr @chas_1, %44
+ %46 = load %45
+ ret %46
+}
+fun @intadd(@x: i32) { 
+%entry:
+ @x_2 = alloc i32
+ store @x, @x_2
+ %47 = load @intt_1
+ %48 = getelemptr @ints_1, %47
+ %49 = load %48
+ %50 = mul %49, 10
+ %51 = load @intt_1
+ %52 = getelemptr @ints_1, %51
+ store %50, %52
+
+ %53 = load @intt_1
+ %54 = getelemptr @ints_1, %53
+ %55 = load %54
+ %56 = load @x_2
+ %57 = add %55, %56
+ %58 = load @intt_1
+ %59 = getelemptr @ints_1, %58
+ store %57, %59
+
+
+ ret 
+}
+fun @find(): i32 { 
+%entry:
+ %60 = call @chapop()
+ store %60, @c_1
+
+ %61 = load @ii_1
+ %62 = getelemptr @get2_1, %61
+ store 32, %62
+
+ %63 = load @c_1
+ %64 = load @ii_1
+ %65 = add %64, 1
+ %66 = getelemptr @get2_1, %65
+ store %63, %66
+
+ %67 = load @ii_1
+ %68 = add %67, 2
+ store %68, @ii_1
+
+ %70 = load @chat_1
+ %69 = eq %70, 0
+ br %69, %then1, %end1
+%then1:
+ ret 0
+%6:
+ jump %end1
+%end1:
+ ret 1
+}
+fun @main(): i32 { 
+%entry:
+ store 0, @intt_1
+
+ store 0, @chat_1
+
+ @lengets_3 = alloc i32
+ %72 = getelemptr @get_1, 0
+ %71 = call @getstr(%72)
+ store %71, @lengets_3
+
  jump %while_entry2
 %while_entry2:
- %65 = load @j_3
- %66 = load @r_2
- %64 = lt %65, %66
- br %64, %while_body2, %while_end2
+ %74 = load @i_1
+ %75 = load @lengets_3
+ %73 = lt %74, %75
+ br %73, %while_body2, %while_end2
 %while_body2:
- %67 = getelemptr @buf_1, 0
- %68 = load @j_3
- %69 = getelemptr %67, %68
- %70 = load %69
- %71 = getelemptr @buf_1, 1
- %72 = load @k_3
- %73 = getelemptr %71, %72
- store %70, %73
+ %78 = load @i_1
+ %79 = getelemptr @get_1, %78
+ %80 = load %79
+ %77 = call @isdigit(%80)
+ %76 = eq %77, 1
+ br %76, %then2, %else2
+%then2:
+ %81 = load @i_1
+ %82 = getelemptr @get_1, %81
+ %83 = load %82
+ %84 = load @ii_1
+ %85 = getelemptr @get2_1, %84
+ store %83, %85
 
- %74 = load @j_3
- %75 = add %74, 1
- store %75, @j_3
-
- %76 = load @k_3
- %77 = add %76, 1
- store %77, @k_3
+ %86 = load @ii_1
+ %87 = add %86, 1
+ store %87, @ii_1
 
 
- jump %while_entry2
-%while_end2:
+ jump %end2
+%else2:
+ %89 = load @i_1
+ %90 = getelemptr @get_1, %89
+ %91 = load %90
+ %88 = eq %91, 40
+ br %88, %then3, %end3
+%then3:
+ call @chapush(40)
+ jump %end3
+%end3:
+ %93 = load @i_1
+ %94 = getelemptr @get_1, %93
+ %95 = load %94
+ %92 = eq %95, 94
+ br %92, %then4, %end4
+%then4:
+ call @chapush(94)
+ jump %end4
+%end4:
+ %97 = load @i_1
+ %98 = getelemptr @get_1, %97
+ %99 = load %98
+ %96 = eq %99, 41
+ br %96, %then5, %end5
+%then5:
+ %100 = call @chapop()
+ store %100, @c_1
+
  jump %while_entry3
 %while_entry3:
- %79 = load @l_2
- %80 = load @r_2
- %78 = lt %79, %80
- br %78, %while_body3, %while_end3
+ %102 = load @c_1
+ %101 = ne %102, 40
+ br %101, %while_body3, %while_end3
 %while_body3:
- %81 = getelemptr @buf_1, 1
- %82 = load @l_2
- %83 = getelemptr %81, %82
- %84 = load %83
- %85 = getelemptr @buf_1, 0
- %86 = load @l_2
- %87 = getelemptr %85, %86
- store %84, %87
+ %103 = load @ii_1
+ %104 = getelemptr @get2_1, %103
+ store 32, %104
 
- %88 = load @l_2
- %89 = add %88, 1
- store %89, @l_2
+ %105 = load @c_1
+ %106 = load @ii_1
+ %107 = add %106, 1
+ %108 = getelemptr @get2_1, %107
+ store %105, %108
+
+ %109 = load @ii_1
+ %110 = add %109, 2
+ store %110, @ii_1
+
+ %111 = call @chapop()
+ store %111, @c_1
 
 
  jump %while_entry3
 %while_end3:
 
- ret 
+ jump %end5
+%end5:
+ %113 = load @i_1
+ %114 = getelemptr @get_1, %113
+ %115 = load %114
+ %112 = eq %115, 43
+ br %112, %then6, %end6
+%then6:
+ jump %while_entry4
+%while_entry4:
+@lor_res_0 = alloc i32
+ %117 = load @chat_1
+ %118 = getelemptr @chas_1, %117
+ %119 = load %118
+ %116 = eq %119, 43
+ br %116, %end_lor_one0, %lor_0_0
+%lor_0_0:
+ %121 = load @chat_1
+ %122 = getelemptr @chas_1, %121
+ %123 = load %122
+ %120 = eq %123, 45
+ br %120, %end_lor_one0, %lor_0_2
+%lor_0_2:
+ %125 = load @chat_1
+ %126 = getelemptr @chas_1, %125
+ %127 = load %126
+ %124 = eq %127, 42
+ br %124, %end_lor_one0, %lor_0_4
+%lor_0_4:
+ %129 = load @chat_1
+ %130 = getelemptr @chas_1, %129
+ %131 = load %130
+ %128 = eq %131, 47
+ br %128, %end_lor_one0, %lor_0_6
+%lor_0_6:
+ %133 = load @chat_1
+ %134 = getelemptr @chas_1, %133
+ %135 = load %134
+ %132 = eq %135, 37
+ br %132, %end_lor_one0, %lor_0_8
+%lor_0_8:
+ %137 = load @chat_1
+ %138 = getelemptr @chas_1, %137
+ %139 = load %138
+ %136 = eq %139, 94
+ br %136, %end_lor_one0, %lor_0_10
+%lor_0_10:
+ %lor_res_1_0 = add 0, 0
+ store %lor_res_1_0, @lor_res_0
+ jump %lor_end_0
+%end_lor_one0:
+ %lor_res_2_0 = add 0, 1
+ store %lor_res_2_0, @lor_res_0
+ jump %lor_end_0
+%lor_end_0:
+ %ans_lor_0 = load@lor_res_0
+ br %ans_lor_0, %while_body4, %while_end4
+%while_body4:
+ %141 = call @find()
+ %140 = eq %141, 0
+ br %140, %then7, %end7
+%then7:
+ jump %while_end4
+%fl_break_continue0:
+ jump %end7
+%end7:
+
+ jump %while_entry4
+%while_end4:
+ call @chapush(43)
+
+ jump %end6
+%end6:
+ %143 = load @i_1
+ %144 = getelemptr @get_1, %143
+ %145 = load %144
+ %142 = eq %145, 45
+ br %142, %then8, %end8
+%then8:
+ jump %while_entry5
+%while_entry5:
+@lor_res_1 = alloc i32
+ %147 = load @chat_1
+ %148 = getelemptr @chas_1, %147
+ %149 = load %148
+ %146 = eq %149, 43
+ br %146, %end_lor_one1, %lor_1_0
+%lor_1_0:
+ %151 = load @chat_1
+ %152 = getelemptr @chas_1, %151
+ %153 = load %152
+ %150 = eq %153, 45
+ br %150, %end_lor_one1, %lor_1_2
+%lor_1_2:
+ %155 = load @chat_1
+ %156 = getelemptr @chas_1, %155
+ %157 = load %156
+ %154 = eq %157, 42
+ br %154, %end_lor_one1, %lor_1_4
+%lor_1_4:
+ %159 = load @chat_1
+ %160 = getelemptr @chas_1, %159
+ %161 = load %160
+ %158 = eq %161, 47
+ br %158, %end_lor_one1, %lor_1_6
+%lor_1_6:
+ %163 = load @chat_1
+ %164 = getelemptr @chas_1, %163
+ %165 = load %164
+ %162 = eq %165, 37
+ br %162, %end_lor_one1, %lor_1_8
+%lor_1_8:
+ %167 = load @chat_1
+ %168 = getelemptr @chas_1, %167
+ %169 = load %168
+ %166 = eq %169, 94
+ br %166, %end_lor_one1, %lor_1_10
+%lor_1_10:
+ %lor_res_1_1 = add 0, 0
+ store %lor_res_1_1, @lor_res_1
+ jump %lor_end_1
+%end_lor_one1:
+ %lor_res_2_1 = add 0, 1
+ store %lor_res_2_1, @lor_res_1
+ jump %lor_end_1
+%lor_end_1:
+ %ans_lor_1 = load@lor_res_1
+ br %ans_lor_1, %while_body5, %while_end5
+%while_body5:
+ %171 = call @find()
+ %170 = eq %171, 0
+ br %170, %then9, %end9
+%then9:
+ jump %while_end5
+%fl_break_continue1:
+ jump %end9
+%end9:
+
+ jump %while_entry5
+%while_end5:
+ call @chapush(45)
+
+ jump %end8
+%end8:
+ %173 = load @i_1
+ %174 = getelemptr @get_1, %173
+ %175 = load %174
+ %172 = eq %175, 42
+ br %172, %then10, %end10
+%then10:
+ jump %while_entry6
+%while_entry6:
+@lor_res_2 = alloc i32
+ %177 = load @chat_1
+ %178 = getelemptr @chas_1, %177
+ %179 = load %178
+ %176 = eq %179, 42
+ br %176, %end_lor_one2, %lor_2_0
+%lor_2_0:
+ %181 = load @chat_1
+ %182 = getelemptr @chas_1, %181
+ %183 = load %182
+ %180 = eq %183, 47
+ br %180, %end_lor_one2, %lor_2_2
+%lor_2_2:
+ %185 = load @chat_1
+ %186 = getelemptr @chas_1, %185
+ %187 = load %186
+ %184 = eq %187, 37
+ br %184, %end_lor_one2, %lor_2_4
+%lor_2_4:
+ %189 = load @chat_1
+ %190 = getelemptr @chas_1, %189
+ %191 = load %190
+ %188 = eq %191, 94
+ br %188, %end_lor_one2, %lor_2_6
+%lor_2_6:
+ %lor_res_1_2 = add 0, 0
+ store %lor_res_1_2, @lor_res_2
+ jump %lor_end_2
+%end_lor_one2:
+ %lor_res_2_2 = add 0, 1
+ store %lor_res_2_2, @lor_res_2
+ jump %lor_end_2
+%lor_end_2:
+ %ans_lor_2 = load@lor_res_2
+ br %ans_lor_2, %while_body6, %while_end6
+%while_body6:
+ %193 = call @find()
+ %192 = eq %193, 0
+ br %192, %then11, %end11
+%then11:
+ jump %while_end6
+%fl_break_continue2:
+ jump %end11
+%end11:
+
+ jump %while_entry6
+%while_end6:
+ call @chapush(42)
+
+ jump %end10
+%end10:
+ %195 = load @i_1
+ %196 = getelemptr @get_1, %195
+ %197 = load %196
+ %194 = eq %197, 47
+ br %194, %then12, %end12
+%then12:
+ jump %while_entry7
+%while_entry7:
+@lor_res_3 = alloc i32
+ %199 = load @chat_1
+ %200 = getelemptr @chas_1, %199
+ %201 = load %200
+ %198 = eq %201, 42
+ br %198, %end_lor_one3, %lor_3_0
+%lor_3_0:
+ %203 = load @chat_1
+ %204 = getelemptr @chas_1, %203
+ %205 = load %204
+ %202 = eq %205, 47
+ br %202, %end_lor_one3, %lor_3_2
+%lor_3_2:
+ %207 = load @chat_1
+ %208 = getelemptr @chas_1, %207
+ %209 = load %208
+ %206 = eq %209, 37
+ br %206, %end_lor_one3, %lor_3_4
+%lor_3_4:
+ %211 = load @chat_1
+ %212 = getelemptr @chas_1, %211
+ %213 = load %212
+ %210 = eq %213, 94
+ br %210, %end_lor_one3, %lor_3_6
+%lor_3_6:
+ %lor_res_1_3 = add 0, 0
+ store %lor_res_1_3, @lor_res_3
+ jump %lor_end_3
+%end_lor_one3:
+ %lor_res_2_3 = add 0, 1
+ store %lor_res_2_3, @lor_res_3
+ jump %lor_end_3
+%lor_end_3:
+ %ans_lor_3 = load@lor_res_3
+ br %ans_lor_3, %while_body7, %while_end7
+%while_body7:
+ %215 = call @find()
+ %214 = eq %215, 0
+ br %214, %then13, %end13
+%then13:
+ jump %while_end7
+%fl_break_continue3:
+ jump %end13
+%end13:
+
+ jump %while_entry7
+%while_end7:
+ call @chapush(47)
+
+ jump %end12
+%end12:
+ %217 = load @i_1
+ %218 = getelemptr @get_1, %217
+ %219 = load %218
+ %216 = eq %219, 37
+ br %216, %then14, %end14
+%then14:
+ jump %while_entry8
+%while_entry8:
+@lor_res_4 = alloc i32
+ %221 = load @chat_1
+ %222 = getelemptr @chas_1, %221
+ %223 = load %222
+ %220 = eq %223, 42
+ br %220, %end_lor_one4, %lor_4_0
+%lor_4_0:
+ %225 = load @chat_1
+ %226 = getelemptr @chas_1, %225
+ %227 = load %226
+ %224 = eq %227, 47
+ br %224, %end_lor_one4, %lor_4_2
+%lor_4_2:
+ %229 = load @chat_1
+ %230 = getelemptr @chas_1, %229
+ %231 = load %230
+ %228 = eq %231, 37
+ br %228, %end_lor_one4, %lor_4_4
+%lor_4_4:
+ %233 = load @chat_1
+ %234 = getelemptr @chas_1, %233
+ %235 = load %234
+ %232 = eq %235, 94
+ br %232, %end_lor_one4, %lor_4_6
+%lor_4_6:
+ %lor_res_1_4 = add 0, 0
+ store %lor_res_1_4, @lor_res_4
+ jump %lor_end_4
+%end_lor_one4:
+ %lor_res_2_4 = add 0, 1
+ store %lor_res_2_4, @lor_res_4
+ jump %lor_end_4
+%lor_end_4:
+ %ans_lor_4 = load@lor_res_4
+ br %ans_lor_4, %while_body8, %while_end8
+%while_body8:
+ %237 = call @find()
+ %236 = eq %237, 0
+ br %236, %then15, %end15
+%then15:
+ jump %while_end8
+%fl_break_continue4:
+ jump %end15
+%end15:
+
+ jump %while_entry8
+%while_end8:
+ call @chapush(37)
+
+ jump %end14
+%end14:
+ %238 = load @ii_1
+ %239 = getelemptr @get2_1, %238
+ store 32, %239
+
+ %240 = load @ii_1
+ %241 = add %240, 1
+ store %241, @ii_1
+
+
+ jump %end2
+%end2:
+ %242 = load @i_1
+ %243 = add %242, 1
+ store %243, @i_1
+
+
+ jump %while_entry2
+%while_end2:
+ jump %while_entry9
+%while_entry9:
+ %245 = load @chat_1
+ %244 = gt %245, 0
+ br %244, %while_body9, %while_end9
+%while_body9:
+ @c_4 = alloc i32
+ %246 = call @chapop()
+ store %246, @c_4
+
+ %247 = load @ii_1
+ %248 = getelemptr @get2_1, %247
+ store 32, %248
+
+ %249 = load @c_4
+ %250 = load @ii_1
+ %251 = add %250, 1
+ %252 = getelemptr @get2_1, %251
+ store %249, %252
+
+ %253 = load @ii_1
+ %254 = add %253, 2
+ store %254, @ii_1
+
+
+ jump %while_entry9
+%while_end9:
+ %255 = load @ii_1
+ %256 = getelemptr @get2_1, %255
+ store 64, %256
+
+ store 1, @i_1
+
+ jump %while_entry10
+%while_entry10:
+ %258 = load @i_1
+ %259 = getelemptr @get2_1, %258
+ %260 = load %259
+ %257 = ne %260, 64
+ br %257, %while_body10, %while_end10
+%while_body10:
+@lor_res_5 = alloc i32
+ %262 = load @i_1
+ %263 = getelemptr @get2_1, %262
+ %264 = load %263
+ %261 = eq %264, 43
+ br %261, %end_lor_one5, %lor_5_0
+%lor_5_0:
+ %266 = load @i_1
+ %267 = getelemptr @get2_1, %266
+ %268 = load %267
+ %265 = eq %268, 45
+ br %265, %end_lor_one5, %lor_5_2
+%lor_5_2:
+ %270 = load @i_1
+ %271 = getelemptr @get2_1, %270
+ %272 = load %271
+ %269 = eq %272, 42
+ br %269, %end_lor_one5, %lor_5_4
+%lor_5_4:
+ %274 = load @i_1
+ %275 = getelemptr @get2_1, %274
+ %276 = load %275
+ %273 = eq %276, 47
+ br %273, %end_lor_one5, %lor_5_6
+%lor_5_6:
+ %278 = load @i_1
+ %279 = getelemptr @get2_1, %278
+ %280 = load %279
+ %277 = eq %280, 37
+ br %277, %end_lor_one5, %lor_5_8
+%lor_5_8:
+ %282 = load @i_1
+ %283 = getelemptr @get2_1, %282
+ %284 = load %283
+ %281 = eq %284, 94
+ br %281, %end_lor_one5, %lor_5_10
+%lor_5_10:
+ %lor_res_1_5 = add 0, 0
+ store %lor_res_1_5, @lor_res_5
+ jump %lor_end_5
+%end_lor_one5:
+ %lor_res_2_5 = add 0, 1
+ store %lor_res_2_5, @lor_res_5
+ jump %lor_end_5
+%lor_end_5:
+ %ans_lor_5 = load@lor_res_5
+ br %ans_lor_5, %then16, %else16
+%then16:
+ @a_5 = alloc i32
+ %285 = call @intpop()
+ store %285, @a_5
+
+ @b_5 = alloc i32
+ %286 = call @intpop()
+ store %286, @b_5
+
+ @c_5 = alloc i32
+ store 0, @c_5
+
+ %288 = load @i_1
+ %289 = getelemptr @get2_1, %288
+ %290 = load %289
+ %287 = eq %290, 43
+ br %287, %then17, %end17
+%then17:
+ %291 = load @a_5
+ %292 = load @b_5
+ %293 = add %291, %292
+ store %293, @c_5
+
+ jump %end17
+%end17:
+ %295 = load @i_1
+ %296 = getelemptr @get2_1, %295
+ %297 = load %296
+ %294 = eq %297, 45
+ br %294, %then18, %end18
+%then18:
+ %298 = load @b_5
+ %299 = load @a_5
+ %300 = sub %298, %299
+ store %300, @c_5
+
+ jump %end18
+%end18:
+ %302 = load @i_1
+ %303 = getelemptr @get2_1, %302
+ %304 = load %303
+ %301 = eq %304, 42
+ br %301, %then19, %end19
+%then19:
+ %305 = load @a_5
+ %306 = load @b_5
+ %307 = mul %305, %306
+ store %307, @c_5
+
+ jump %end19
+%end19:
+ %309 = load @i_1
+ %310 = getelemptr @get2_1, %309
+ %311 = load %310
+ %308 = eq %311, 47
+ br %308, %then20, %end20
+%then20:
+ %312 = load @b_5
+ %313 = load @a_5
+ %314 = div %312, %313
+ store %314, @c_5
+
+ jump %end20
+%end20:
+ %316 = load @i_1
+ %317 = getelemptr @get2_1, %316
+ %318 = load %317
+ %315 = eq %318, 37
+ br %315, %then21, %end21
+%then21:
+ %319 = load @b_5
+ %320 = load @a_5
+ %321 = mod %319, %320
+ store %321, @c_5
+
+ jump %end21
+%end21:
+ %323 = load @i_1
+ %324 = getelemptr @get2_1, %323
+ %325 = load %324
+ %322 = eq %325, 94
+ br %322, %then22, %end22
+%then22:
+ %327 = load @b_5
+ %328 = load @a_5
+ %326 = call @power(%327, %328)
+ store %326, @c_5
+
+ jump %end22
+%end22:
+ %329 = load @c_5
+ call @intpush(%329)
+
+ jump %end16
+%else16:
+ %331 = load @i_1
+ %332 = getelemptr @get2_1, %331
+ %333 = load %332
+ %330 = ne %333, 32
+ br %330, %then23, %end23
+%then23:
+ %334 = load @i_1
+ %335 = getelemptr @get2_1, %334
+ %336 = load %335
+ %337 = sub %336, 48
+ call @intpush(%337)
+ store 1, @ii_1
+
+ jump %while_entry11
+%while_entry11:
+ %339 = load @i_1
+ %340 = load @ii_1
+ %341 = add %339, %340
+ %342 = getelemptr @get2_1, %341
+ %343 = load %342
+ %338 = ne %343, 32
+ br %338, %while_body11, %while_end11
+%while_body11:
+ %344 = load @i_1
+ %345 = load @ii_1
+ %346 = add %344, %345
+ %347 = getelemptr @get2_1, %346
+ %348 = load %347
+ %349 = sub %348, 48
+ call @intadd(%349)
+ %350 = load @ii_1
+ %351 = add %350, 1
+ store %351, @ii_1
+
+
+ jump %while_entry11
+%while_end11:
+ %352 = load @i_1
+ %353 = load @ii_1
+ %354 = add %352, %353
+ %355 = sub %354, 1
+ store %355, @i_1
+
+
+ jump %end23
+%end23:
+
+ jump %end16
+%end16:
+ %356 = load @i_1
+ %357 = add %356, 1
+ store %357, @i_1
+
+
+ jump %while_entry10
+%while_end10:
+ %358 = getelemptr @ints_1, 1
+ %359 = load %358
+ call @putint(%359)
+ ret 0
 }
-fun @main(): i32 { 
-%entry:
- @n_3 = alloc i32
- %91 = getelemptr @buf_1, 0
- %92 
