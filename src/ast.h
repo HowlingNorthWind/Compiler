@@ -862,13 +862,25 @@ class UnaryExp : public BaseAST {
             // std::string valueForLValArray = '%'+std::to_string(tmpcnt);
             // tmpcnt++;
             // str0 += " "+valueForLValArray+" = load "+ptrIdent+"\n";
+            if(isArrayFunParam == false){
+              std::string ptrnum = "0";
+              std::string regForPtr = '%'+std::to_string(tmpcnt);
+              tmpcnt++;
+              str0 += " "+regForPtr+" = getelemptr "+ptrIdent+", "+ptrnum+"\n";
 
-            std::string ptrnum = "0";
-            std::string regForPtr = '%'+std::to_string(tmpcnt);
-            tmpcnt++;
-            str0 += " "+regForPtr+" = getelemptr "+ptrIdent+", "+ptrnum+"\n";
-
-            ptrIdent = regForPtr;
+              ptrIdent = regForPtr;
+            }else if(isArrayFunParam == true){
+              std::string regToLoadArrayParam = '%'+std::to_string(tmpcnt);
+              tmpcnt++;
+              str0 += " "+regToLoadArrayParam+" = load "+resident+"\n";
+              std::string regToGetPtrArrayParam = '%'+std::to_string(tmpcnt);
+              tmpcnt++;
+              std::string ptrnum0 = "0";
+              str0 += " "+regToGetPtrArrayParam+" = getptr "+regToLoadArrayParam+", "+ptrnum0+"\n";
+          
+              ptrIdent = regToGetPtrArrayParam;
+            }
+            
             
 
             // std::cout<<str0<<std::endl;
