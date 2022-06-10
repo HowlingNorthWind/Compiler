@@ -72,7 +72,7 @@ CompUnit
     $$ = $1;
   }
   | FuncDef {
-    std::cout<<"COMPUNIT START"<<std::endl;
+    // std::cout<<"COMPUNIT START"<<std::endl;
     // auto comp_unit = make_unique<CompUnitAST>();
     // comp_unit->func_def = unique_ptr<BaseAST>($1);
     // comp_unit->son.push_back($1);
@@ -91,17 +91,17 @@ CompUnit
     // ast->func_def = unique_ptr<BaseAST>($1);
     // ast->son.push_back($1);
     // $$ = ast;
-    std::cout<<"COMPUNIT END"<<std::endl;
+    // std::cout<<"COMPUNIT END"<<std::endl;
   }
   | Decl {
-    std::cout<<"COMPUNIT DECL START"<<std::endl;
+    // std::cout<<"COMPUNIT DECL START"<<std::endl;
     auto tmpast = new CompUnitAST();
     tmpast->func_def = unique_ptr<BaseAST>($1);
     tmpast->son.push_back($1);
     $$ = tmpast;
     auto tmptmp = unique_ptr<BaseAST>(tmpast);
     ast = move(tmptmp);
-    std::cout<<"COMPUNIT DECL END"<<std::endl;
+    // std::cout<<"COMPUNIT DECL END"<<std::endl;
   }
   ;
 
@@ -118,13 +118,13 @@ CompUnit
 
 Decl
   : ConstDecl {
-    std::cout<<"Decl"<<std::endl;
+    // std::cout<<"Decl"<<std::endl;
     auto ast = new Decl();
     ast->son.push_back($1);
     $$ = ast;
   }
   | VarDecl {
-    std::cout<<"Decl"<<std::endl;
+    // std::cout<<"Decl"<<std::endl;
     auto ast = new Decl();
     ast->son.push_back($1);
     $$ = ast;
@@ -133,7 +133,7 @@ Decl
 
 ConstDecl
   : CONST BType ConstDef_dup ';'{
-    std::cout<<"ConstDecl"<<std::endl;
+    // std::cout<<"ConstDecl"<<std::endl;
     auto ast = new ConstDecl();
     ast->son.push_back($2);
     ast->son.push_back($3);
@@ -247,7 +247,7 @@ ConstInitVal_dup
 
 VarDecl 
   : BType VarDef_dup ';' {
-    std::cout<<"VarDecl"<<std::endl;
+    // std::cout<<"VarDecl"<<std::endl;
     auto ast = new VarDecl();
     ast->son.push_back($1);
     ast->son.push_back($2);
@@ -257,14 +257,14 @@ VarDecl
 
 VarDef_dup
   : VarDef {
-    std::cout<<"VarDef_dup"<<std::endl;
+    // std::cout<<"VarDef_dup"<<std::endl;
     auto ast = new VarDef_dup();
     ast->son.push_back($1);
     $$ = ast;
-    std::cout<<"VarDef_dup Finish"<<std::endl;
+    // std::cout<<"VarDef_dup Finish"<<std::endl;
   }
   | VarDef_dup ',' VarDef {
-    std::cout<<"VarDef_dup"<<std::endl;
+    // std::cout<<"VarDef_dup"<<std::endl;
     $1->son.push_back($3);
     $$ = $1;
   } 
@@ -272,12 +272,12 @@ VarDef_dup
 
 VarDef
   : IDENT ConstNum {
-    std::cout<<"VarDef"<<std::endl;
+    // std::cout<<"VarDef"<<std::endl;
     auto ast = new VarDef();
     ast->isArray = $2->isArray;
     if($2->isArray == false){
       ast->ident = *unique_ptr<string>($1); 
-      std::cout<<ast->ident<<std::endl;
+      // std::cout<<ast->ident<<std::endl;
       sym_table[ast->ident] = "";
     }else{
       ast->ident = *unique_ptr<string>($1); 
@@ -286,15 +286,15 @@ VarDef
     $$ = ast;
   }
   | IDENT ConstNum '=' InitVal {
-    std::cout<<"VarDef"<<std::endl;
+    // std::cout<<"VarDef"<<std::endl;
     auto ast = new VarDef();
     ast->isArray = $2->isArray;
     if($2->isArray == false){
       ast->ident = *unique_ptr<string>($1);
       ast->initval = $4->val;
       ast->val = $4->val;
-      cout<<"VarDef"<<endl;
-      cout<<ast->val<<endl;
+      // cout<<"VarDef"<<endl;
+      // cout<<ast->val<<endl;
       ast->son.push_back($4);
       sym_table[ast->ident] = "";
     }else{
@@ -312,8 +312,8 @@ InitVal
     ast->son.push_back($1);
     ast->val = $1->val;
     ast->isArray = false;
-    cout<<"InitVal"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"InitVal"<<endl;
+    // cout<<ast->val<<endl;
     $$ = ast;
   }
   | '{' '}' {
@@ -346,12 +346,12 @@ InitVal_dup
 
 FuncDef
   : BType IDENT '(' ')' Block {
-    std::cout<<"FUNCDEF"<<std::endl;
+    // std::cout<<"FUNCDEF"<<std::endl;
     auto ast = new FuncDefAST();
     ast->func_type = unique_ptr<BaseAST>($1);
     ast->ident = *unique_ptr<string>($2);
-    std::cout<<"FuncDef_YYYYY"<<std::endl;
-    std::cout<<ast->ident<<std::endl;
+    // std::cout<<"FuncDef_YYYYY"<<std::endl;
+    // std::cout<<ast->ident<<std::endl;
     ast->block = unique_ptr<BaseAST>($5);
     ast->son.push_back($1);
     ast->son.push_back($5);
@@ -425,7 +425,7 @@ FuncFParam
 
 Block
   : '{' BlockItem_dup '}' {
-    std::cout<<"BLOCK"<<std::endl;
+    // std::cout<<"BLOCK"<<std::endl;
     auto ast = new BlockAST();
     ast->son = $2->son;
     $$ = ast;
@@ -464,8 +464,8 @@ LVal
       ast->ident = *unique_ptr<string>($1);
       if(sym_table.find(ast->ident) != sym_table.end()){
         std::variant<int, std::string> variant_tmp = sym_table.at(ast->ident);
-        std::cout<<"LVAL"<<std::endl;
-        std::cout<<variant_tmp.index()<<std::endl;
+        // std::cout<<"LVAL"<<std::endl;
+        // std::cout<<variant_tmp.index()<<std::endl;
         if(variant_tmp.index()==0){
           ast->val = std::get<int>(variant_tmp);
         }
@@ -505,16 +505,16 @@ ConstExp
 
 Stmt
   : RETURN Exp ';' {
-    std::cout<<"STMT1"<<std::endl;
+    // std::cout<<"STMT1"<<std::endl;
     auto ast = new StmtAST();
     ast->ret = true;
     ast->exp = unique_ptr<BaseAST>($2);
     ast->son.push_back($2);
-    std::cout<<"STMT1KKKKKKK"<<std::endl;
+    // std::cout<<"STMT1KKKKKKK"<<std::endl;
     $$ = ast;
   }
   | LVal '=' Exp ';' {
-    std::cout<<"STMT2"<<std::endl;
+    // std::cout<<"STMT2"<<std::endl;
     auto ast = new StmtAST();
     ast->son.push_back($1);
     ast->son.push_back($2);
@@ -522,30 +522,30 @@ Stmt
     $$ = ast;
   }
   | Block {
-    std::cout<<"STMT3"<<std::endl;
+    // std::cout<<"STMT3"<<std::endl;
     auto ast = new StmtAST();
     ast->son.push_back($1);
     $$ = ast;
   }
   | Exp ';' {
-    std::cout<<"STMT4"<<std::endl;
+    // std::cout<<"STMT4"<<std::endl;
     auto ast = new StmtAST();
     ast->son.push_back($1);
     $$ = ast;
   }
   | ';' {
-    std::cout<<"STMT5"<<std::endl;
+    // std::cout<<"STMT5"<<std::endl;
     auto ast = new StmtAST();
     $$ = ast;
   }
   | RETURN ';' {
-    std::cout<<"STMT6"<<std::endl;
+    // std::cout<<"STMT6"<<std::endl;
     auto ast = new StmtAST();
     ast->ret = true;
     $$ = ast;
   }
   | IF '(' Exp ')' Stmt ELSE Stmt{
-    std::cout<<"STMT_IF_ELSE"<<std::endl;
+    // std::cout<<"STMT_IF_ELSE"<<std::endl;
     auto ast = new StmtAST();
     ast->fl_if = true;
     ast->son.push_back($3);
@@ -554,7 +554,7 @@ Stmt
     $$ = ast;
   }
   | IF '(' Exp ')' Stmt {
-    std::cout<<"STMT_IF_ONLY"<<std::endl;
+    // std::cout<<"STMT_IF_ONLY"<<std::endl;
     auto ast = new StmtAST();
     ast->fl_if = true;
     ast->son.push_back($3);
@@ -585,8 +585,8 @@ Exp
     auto ast = new ExpAST();
     ast->val = $1->val;
     ast->son.push_back($1);
-    cout<<"Exp"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"Exp"<<endl;
+    // cout<<ast->val<<endl;
     $$ = ast;
   }
   ;
@@ -610,8 +610,8 @@ PrimaryExp
     auto ast = new PrimaryExp();
     ast->number = unique_ptr<BaseAST>($1);
     ast->val = $1->val;
-    cout<<"PrimaryExp"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"PrimaryExp"<<endl;
+    // cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
@@ -622,8 +622,8 @@ Number
   : INT_CONST {
     auto ast = new Number();
     ast->val = $1;
-    cout<<"INT_CONST"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"INT_CONST"<<endl;
+    // cout<<ast->val<<endl;
     ast->isint = true;
     $$ = ast;
   }
@@ -634,8 +634,8 @@ UnaryExp
     auto ast = new UnaryExp();
     ast->is_ident = false;
     ast->val = $1->val;
-    cout<<"UnaryExp"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"UnaryExp"<<endl;
+    // cout<<ast->val<<endl;
     ast->isint = $1->isint;
     ast->son.push_back($1);
     $$ = ast;
@@ -691,8 +691,8 @@ UnaryOp
   : '+'{
     auto ast = new UnaryOp();
     ast->son.push_back($1);
-    std::cout<<"ast->type"<<std::endl;
-    std::cout<<ast->son[0]->op<<std::endl;
+    // std::cout<<"ast->type"<<std::endl;
+    // std::cout<<ast->son[0]->op<<std::endl;
     $$ = ast;  
   }
   | '-'{
@@ -711,8 +711,8 @@ MulExp
   : UnaryExp{
     auto ast = new MulExp();
     ast->val = $1->val;
-    cout<<"MULExp"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"MULExp"<<endl;
+    // cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
@@ -744,8 +744,8 @@ AddExp
   : MulExp{
     auto ast = new AddExp();
     ast->val = $1->val;
-    cout<<"AddExp"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"AddExp"<<endl;
+    // cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
@@ -768,8 +768,8 @@ RelExp
   : AddExp{
     auto ast = new RelExp();
     ast->val = $1->val;
-    cout<<"ReLExp"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"ReLExp"<<endl;
+    // cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
@@ -820,8 +820,8 @@ EqExp
   : RelExp{
     auto ast = new EqExp();
     ast->val = $1->val;
-    cout<<"EqExp"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"EqExp"<<endl;
+    // cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
@@ -851,8 +851,8 @@ LAndExp
   : EqExp{
     auto ast = new LAndExp();
     ast->val = $1->val;
-    cout<<"LAndExp"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"LAndExp"<<endl;
+    // cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }
@@ -872,8 +872,8 @@ LOrExp
   : LAndExp{
     auto ast = new LOrExp();
     ast->val = $1->val;
-    cout<<"LOrExp"<<endl;
-    cout<<ast->val<<endl;
+    // cout<<"LOrExp"<<endl;
+    // cout<<ast->val<<endl;
     ast->son.push_back($1);
     $$ = ast;
   }

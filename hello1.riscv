@@ -1,0 +1,38 @@
+  .text 
+  .global main
+main:
+ addi sp, sp, -16
+ li t0, 11
+ bnez t0, end_lor_one0
+ j lor_0_0
+end_lor_one0:
+ li t0, 0
+ li t1, 1
+ add t0, t0, t1
+ sw t0, 4(sp)
+
+ lw t0, 4(sp)
+ lw t1, 0(sp)
+ sw t0, 0(t1)
+ j lor_end_0
+lor_0_0:
+ li t0, 0
+ bnez t0, end_lor_one0
+ j lor_0_2
+lor_end_0:
+ lw t0, 0(sp)
+ sw t0, 8(sp)
+
+ lw a0, 8(sp)
+ addi sp, sp, 16
+ ret
+lor_0_2:
+ li t0, 0
+ li t1, 0
+ add t0, t0, t1
+ sw t0, 12(sp)
+
+ lw t0, 12(sp)
+ lw t1, 0(sp)
+ sw t0, 0(t1)
+ j lor_end_0

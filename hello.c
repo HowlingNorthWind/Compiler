@@ -1,65 +1,41 @@
-
-int init = 0;
-
-void init1d(int n, int arr[]) {
-  int i = 0;
-  while (i < n) {
-    arr[i] = init;
-    init = init + 1;
-    i = i + 1;
-  }
+int n;
+int bubblesort(int arr[])
+{
+    int i;
+    int j;
+    i =0; 
+    while(i < n-1){
+    // Last i elements are already in place
+        j = 0;
+        while(j < n-i-1){
+            if (arr[j] > arr[j+1]) {
+                // swap(&arr[j], &arr[j+1]); 
+                int tmp;
+                tmp = arr[j+1];
+                arr[j+1] = arr[j];
+                arr[j] = tmp;
+            }
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+    return 0;
 }
 
-void init2d(int n, int arr[][10]) {
-  int i = 0;
-  while (i < n) {
-    init1d(10, arr[i]);
-    i = i + 1;
-  }
-}
-
-void init3d(int n, int arr[][10][10]) {
-  int i = 0;
-  while (i < n) {
-    init2d(10, arr[i]);
-    i = i + 1;
-  }
-}
-
-int sum1d(int n, int arr[]) {
-  int i = 0, sum = 0;
-  while (i < n) {
-    sum = sum + arr[i];
-    i = i + 1;
-  }
-  return sum;
-}
-
-int sum2d(int n, int arr[][10]) {
-  int i = 0, sum = 0;
-  while (i < n) {
-    sum = sum + sum1d(10, arr[i]);
-    i = i + 1;
-  }
-  return sum;
-}
-
-int sum3d(int n, int arr[][10][10]) {
-  int i = 0, sum = 0;
-  while (i < n) {
-    sum = sum + sum2d(10, arr[i]);
-    i = i + 1;
-  }
-  return sum;
-}
-
-int main() {
-  int arr[10][10][10];
-  init3d(10, arr);
-  int sum = sum3d(10, arr);
-  sum = sum + sum2d(10, arr[1]);
-  sum = sum + sum1d(10, arr[2][3]);
-  putint(sum);
-  putch(10);
-  return sum;
+int main(){
+    n = 10;
+    int a[10];
+    a[0]=4;a[1]=3;a[2]=9;a[3]=2;a[4]=0;
+    a[5]=1;a[6]=6;a[7]=5;a[8]=7;a[9]=8;
+    int i;
+    i = bubblesort(a);
+    while (i < n) {
+        int tmp;
+        tmp = a[i];
+        putint(tmp);
+        tmp = 10;
+        putch(tmp);
+        i = i + 1;
+    }
+    return 0;
 }

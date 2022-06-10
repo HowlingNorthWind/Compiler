@@ -1,0 +1,310 @@
+  .text 
+  .global main
+main:
+ addi sp, sp, -144
+ lw t0, 0(sp)
+ li t1, 0
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 4(sp)
+
+ li t0, 0
+ sw t0, 4(sp)
+
+ lw t0, 0(sp)
+ li t1, 1
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 8(sp)
+
+ li t0, 0
+ sw t0, 8(sp)
+
+ lw t0, 0(sp)
+ li t1, 2
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 12(sp)
+
+ li t0, 0
+ sw t0, 12(sp)
+
+ lw t0, 0(sp)
+ li t1, 3
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 16(sp)
+
+ li t0, 0
+ sw t0, 16(sp)
+
+ lw t0, 0(sp)
+ li t1, 4
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 20(sp)
+
+ li t0, 0
+ sw t0, 20(sp)
+
+ lw t0, 0(sp)
+ li t1, 5
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 24(sp)
+
+ li t0, 0
+ sw t0, 24(sp)
+
+ lw t0, 0(sp)
+ li t1, 6
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 28(sp)
+
+ li t0, 0
+ sw t0, 28(sp)
+
+ lw t0, 0(sp)
+ li t1, 7
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 32(sp)
+
+ li t0, 0
+ sw t0, 32(sp)
+
+ lw t0, 0(sp)
+ li t1, 8
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 36(sp)
+
+ li t0, 0
+ sw t0, 36(sp)
+
+ lw t0, 0(sp)
+ li t1, 9
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 40(sp)
+
+ li t0, 0
+ sw t0, 40(sp)
+
+ lw t0, 44(sp)
+ li t1, 0
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 48(sp)
+
+ li t0, 0
+ sw t0, 48(sp)
+
+ lw t0, 44(sp)
+ li t1, 1
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 52(sp)
+
+ li t0, 0
+ sw t0, 52(sp)
+
+ lw t0, 44(sp)
+ li t1, 2
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 56(sp)
+
+ li t0, 0
+ sw t0, 56(sp)
+
+ lw t0, 44(sp)
+ li t1, 3
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 60(sp)
+
+ li t0, 0
+ sw t0, 60(sp)
+
+ lw t0, 44(sp)
+ li t1, 4
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 64(sp)
+
+ li t0, 0
+ sw t0, 64(sp)
+
+ lw t0, 44(sp)
+ li t1, 5
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 68(sp)
+
+ li t0, 0
+ sw t0, 68(sp)
+
+ lw t0, 44(sp)
+ li t1, 6
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 72(sp)
+
+ li t0, 0
+ sw t0, 72(sp)
+
+ lw t0, 44(sp)
+ li t1, 7
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 76(sp)
+
+ li t0, 0
+ sw t0, 76(sp)
+
+ lw t0, 44(sp)
+ li t1, 8
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 80(sp)
+
+ li t0, 0
+ sw t0, 80(sp)
+
+ lw t0, 44(sp)
+ li t1, 9
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 84(sp)
+
+ li t0, 0
+ sw t0, 84(sp)
+
+ li t0, 0
+ sw t0, 88(sp)
+
+ lw t0, 92(sp)
+ li t1, 0
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 96(sp)
+
+ li t0, 0
+ sw t0, 96(sp)
+
+ lw t0, 92(sp)
+ li t1, 1
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 100(sp)
+
+ li t0, 0
+ sw t0, 100(sp)
+
+ lw t0, 92(sp)
+ li t1, 2
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 104(sp)
+
+ li t0, 0
+ sw t0, 104(sp)
+
+ lw t0, 92(sp)
+ li t1, 3
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 108(sp)
+
+ li t0, 0
+ sw t0, 108(sp)
+
+ lw t0, 92(sp)
+ li t1, 4
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 112(sp)
+
+ li t0, 0
+ sw t0, 112(sp)
+
+ lw t0, 92(sp)
+ li t1, 5
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 116(sp)
+
+ li t0, 0
+ sw t0, 116(sp)
+
+ lw t0, 92(sp)
+ li t1, 6
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 120(sp)
+
+ li t0, 0
+ sw t0, 120(sp)
+
+ lw t0, 92(sp)
+ li t1, 7
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 124(sp)
+
+ li t0, 0
+ sw t0, 124(sp)
+
+ lw t0, 92(sp)
+ li t1, 8
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 128(sp)
+
+ li t0, 0
+ sw t0, 128(sp)
+
+ lw t0, 92(sp)
+ li t1, 9
+ li t2, 4
+ mul t1, t1, t2
+ add t0, t0, t1
+ sw t0, 132(sp)
+
+ li t0, 0
+ sw t0, 132(sp)
+
+ li a0, 0
+ addi sp, sp, 144
+ ret
