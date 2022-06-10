@@ -949,7 +949,7 @@ void Visit(const koopa_raw_store_t &rawStore) {
   }else {
       readFrom(rawStore.value, "t0");
       // writeTo(rawStore.dest, "t0");
-      if(rawStore.dest->ty->tag == KOOPA_RTT_POINTER &&rawStore.dest->kind.tag == KOOPA_RVT_GET_ELEM_PTR){
+      if(rawStore.dest->ty->tag == KOOPA_RTT_POINTER && (rawStore.dest->kind.tag == KOOPA_RVT_GET_ELEM_PTR||rawStore.dest->kind.tag == KOOPA_RVT_GET_PTR)){
         readFrom(rawStore.dest, "t1");
         strForRISCV += " sw t0, 0(t1)\n";
       }else{
@@ -968,7 +968,7 @@ void Visit(const koopa_raw_store_t &rawStore) {
 
 void Visit(const koopa_raw_load_t &load) {
   readFrom(load.src, "t0");
-  if(load.src->ty->tag == KOOPA_RTT_POINTER && load.src->kind.tag == KOOPA_RVT_GET_ELEM_PTR){
+  if(load.src->ty->tag == KOOPA_RTT_POINTER && (load.src->kind.tag == KOOPA_RVT_GET_ELEM_PTR||load.src->kind.tag == KOOPA_RVT_GET_PTR)){
     strForRISCV += " lw t0, 0(t0)\n";
   }else{
     
