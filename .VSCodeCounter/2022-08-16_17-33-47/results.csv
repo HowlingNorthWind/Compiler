@@ -1,0 +1,7 @@
+"filename", "language", "Lex/Flex", "C++", "Bison", "comment", "blank", "total"
+"c:\Users\17837\sysy-make-template\src\ast.h", "C++", 0, 1930, 0, 333, 381, 2644
+"c:\Users\17837\sysy-make-template\src\koopa.h", "C++", 0, 239, 0, 302, 59, 600
+"c:\Users\17837\sysy-make-template\src\main.cpp", "C++", 0, 646, 0, 293, 177, 1116
+"c:\Users\17837\sysy-make-template\src\sysy.l", "Lex/Flex", 49, 0, 0, 7, 22, 78
+"c:\Users\17837\sysy-make-template\src\sysy.y", "Bison", 0, 0, 713, 116, 69, 898
+"Total", "-", 49, 2815, 713, 1051, 708, 5336

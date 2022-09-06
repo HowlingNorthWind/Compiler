@@ -1,14 +1,17 @@
 
-int n;
-int ab(int arr[])
-{
-   
-    return arr[1];
+void f(){
+  int b=0;
 }
 
 int main(){
-    n = 10;
-    int a[5]={1,2,3};
 
-    return ab(a);
+  int b=2;
+  {
+    int a=1;
+  }
+
+  {
+    int a=3;
+  }
+  return b;
 }

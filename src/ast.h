@@ -647,13 +647,9 @@ class ExpAST : public BaseAST {
 
   std::string retvaltmp(std::string& str0) override
   {
-    // std::cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"<<std::endl;
-    // std::cout<<"Exp"<<std::endl;
+    
     std::string tmp = son[0]->retvaltmp(str0);
     val = son[0]->val;
-    // std::cout<<"EXPAAAAAAAAAAA"<<std::endl;
-    // std::cout<<tmp<<std::endl;
-    // std::cout<<str0<<std::endl;
     return tmp;
   }
 };
@@ -1993,7 +1989,6 @@ class BlockItem_dup: public BaseAST {
   }
 };
 
-
 class BlockItem: public BaseAST {
   public:
   BlockItem(){
@@ -2214,6 +2209,7 @@ class ConstInitVal_dup: public BaseAST {
   void Dump(std::string& str0) const override {
    
   }
+  
   std::string retvaltmp(std::string& str0) override  {
     return "";
   }

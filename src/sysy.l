@@ -34,10 +34,10 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 %%
 
 
-"/*"    {BEGIN COMMENTS;}
+"/*"    {}
 <COMMENTS>.
 <COMMENTS>\n
-<COMMENTS>"*/"  {BEGIN INITIAL;}
+<COMMENTS>"*/"  {}
 
 {WhiteSpace}    { /* 忽略, 不做任何操作 */ }
 {LineComment}   { /* 忽略, 不做任何操作 */ }
