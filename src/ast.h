@@ -48,7 +48,7 @@ class BaseAST {
   BaseAST(TYPE t): type(t){}
   BaseAST(TYPE t, char o): type(t), op(o)
   {
-    // std::cout<<"char_______op"<<o<<std::endl;
+
   }
   virtual ~BaseAST() = default;
   virtual void Dump(std::string& str0) const = 0;
@@ -101,7 +101,6 @@ class CompUnitAST : public BaseAST {
   std::unique_ptr<BaseAST> func_def;
   
   void Dump(std::string& str0) const override {
-    // std::cout << "CompUnitAST { ";
     cur_table = &sym_table;
 
     std::map<std::string, std::variant<int, std::string>> global_var_table;
@@ -131,18 +130,11 @@ class CompUnitAST : public BaseAST {
     funcTable["stoptime"] = "void";
 
     int sz = son.size();
-    // std::cout<<"COMP_UNIT_AST_SIZE  "<<sz<<std::endl;
     symcnt += 1;
     for(int i = 0; i < sz; i++){
-      // std::cout<<"FUNCDEF_INDEX  "<<i<<std::endl;
       son[i]->Dump(str0);
-      // std::cout<<"FINISH ONE FUNCDEF"<<std::endl;
-      // std::cout<<str0<<std::endl;
-      // std::cout<<"COMP_UNIT_AST_SIZE  "<<sz<<std::endl;
     }
     symcnt -= 1;
-    // func_def->Dump(str0);
-    // std::cout << " }";
   }
 };
 
@@ -156,17 +148,6 @@ class FuncDefAST : public BaseAST {
   std::unique_ptr<BaseAST> block;
   std::string func_type_str;
   void Dump(std::string& str0) const override {
-    // std::cout << "FuncDefAST  "<<ident<<" "<<str0<<std::endl;
-    // func_type->Dump();
-    // std::cout << ", " << ident << ", ";
-    // block->Dump();
-    // std::cout << " }";
-    // std::cout << "fun @";
-    // std::cout << ident << "(): ";
-    // func_type->Dump();
-    // std::cout << " { "<<std::endl;
-    // block->Dump();
-    // std::cout << " }";
     str0 += "fun @";
     str0 += ident;
     funcTable[ident] = son[0]->func_type_all;
@@ -177,24 +158,16 @@ class FuncDefAST : public BaseAST {
     }
     str0 += ")";
    
-    // std::cout<<str0<<std::endl;
-    // assert(false);
-    // std::cout<<"ASDFGHGFDS"<<str0<<std::endl;
     
     if(son[0]->func_type_all == "int"){
       str0 += ": i32";
     }else if(son[0]->func_type_all == "void"){
       str0 += "";
     }
-    // func_type->Dump(str0);
-    // std::cout<<"func_TYPE"<<str0<<std::endl;
+
     str0 += " { \n";
-    // fprintf(yyout, " { \n");
-    // std::cout << " { "<<std::endl;
 
     str0 += "\%entry:\n";
-
-    // std::cout<<str0<<std::endl;
 
     std::map<std::string, std::variant<int, std::string>> new_table;
     std::map<std::string, std::variant<int, std::string>> *tmp_table = cur_table;
@@ -211,16 +184,6 @@ class FuncDefAST : public BaseAST {
     std::map<std::string, std::variant<int, std::string>> new_var_table;
     std::map<std::string, std::variant<int, std::string>> *tmp_var_table = curFunvar_table;
     curFunvar_table = &new_var_table;
-
-    // std::map<std::string, std::variant<int, std::string>>::iterator iter;
-    // std::cout<<"ITERATOR CUR"<<std::endl;
-    // for(iter = (*cur_table).begin(); iter != (*cur_table).end(); ++iter){
-    //   std::cout<<iter->first<<std::endl;
-    // }
-    // std::cout<<"ITERATOR TMP"<<std::endl;
-    // for(iter = (*tmp_table).begin(); iter != (*tmp_table).end(); ++iter){
-    //   std::cout<<iter->first<<std::endl;
-    // }
 
     symcnt += 1;
 
@@ -250,8 +213,6 @@ class FuncDefAST : public BaseAST {
           (*cur_table)[identIndex] = "ArrayParam";
           (*cur_array_dims_table)[identIndex] = totalDimsNum;
 
-          // std::cout<<totalDimsNum<<std::endl;
-          // assert(false);
         }
         
       }
@@ -260,12 +221,6 @@ class FuncDefAST : public BaseAST {
     block->Dump(str0);
 
     if(son[0]->func_type_all == "int"){
-      //  char c = str0.back();
-      //   while(c!= '\%'){
-      //     str0.pop_back();
-      //     c = str0.back();
-      //   }
-      //   str0.pop_back();
       str0 += " ret 0\n";
     }else{
       str0 += " ret \n";
@@ -278,9 +233,6 @@ class FuncDefAST : public BaseAST {
     curFunvar_table = tmp_var_table;
     cur_array_dims_table = tmp_array_dims_table;
     symcnt -= 1;
-    // std::cout<<str0<<std::endl;
-    // fprintf(yyout, "}");
-    // std::cout << "}";
   }
 };
 
@@ -290,12 +242,9 @@ class FuncTypeAST : public BaseAST {
   std::string func_type_str;
 
   void Dump(std::string& str0) const override {
-    // std::cout<<"FuncTypeASTTT"<<std::endl;
     if(func_type_str == "int")
     {
         str0 += ": i32";
-        // fprintf(yyout, "i32");
-        // std::cout << "i32";
     } else if(func_type_str == "void"){
       str0 += "";
       
@@ -406,19 +355,7 @@ class BlockAST : public BaseAST {
     total_array_dims_table[cur_array_dims_table] =  tmp_array_dims_table;
 
 
-    // std::map<std::string, std::variant<int, std::string>>::iterator iter;
-    // std::cout<<"ITERATOR CUR"<<std::endl;
-    // for(iter = (*cur_table).begin(); iter != (*cur_table).end(); ++iter){
-    //   std::cout<<iter->first<<std::endl;
-    // }
-    // std::cout<<"ITERATOR TMP"<<std::endl;
-    // for(iter = (*tmp_table).begin(); iter != (*tmp_table).end(); ++iter){
-    //   std::cout<<iter->first<<std::endl;
-    // }
     symcnt += 1;
-    // std::cout<<"SYMCNT "<<symcnt<<std::endl;
-    // stmt->Dump(str0);
-    // son[0]->retvaltmp(str0);
     for(int i = 0; i < son.size(); i++){
       son[i]->retvaltmp(str0);
     }
@@ -427,8 +364,6 @@ class BlockAST : public BaseAST {
     cur_table = tmp_table;
     cur_array_dims_table = tmp_array_dims_table;
     symcnt -= 1;
-    // fprintf(yyout, "\n");
-    // std::cout << std::endl;
   }
 };
 
@@ -445,37 +380,22 @@ class StmtAST : public BaseAST {
   bool fl_break = false;
   bool fl_continue = false;
   void Dump(std::string& str0) const override {
-    // std::cout<<"Stmt"<<std::endl;
     
     if(ret == true){
       if(son.size() > 0){
-      // std::cout<<"STMT1"<<std::endl;
-      std::string tmp = exp->retvaltmp(str0);
-      // str0 += std::to_string(number).c_str();
-      // fprintf(yyout, "  ret ");
-      // fprintf(yyout, std::to_string(number).c_str());
-      // std::cout<<tmp<<std::endl;
-      // std::cout<<"asdfghjkasdfghjkasdfghj"<<std::endl;
-      str0 += " ret ";
-      // std::cout<<str0<<std::endl;
-      str0 += tmp.c_str();
-      str0 += '\n';
-      str0 += "\%"+std::to_string(bblockcnt)+':'+'\n';
-      bblockcnt += 1;
-      // std::cout<<str0<<std::endl;
-      // std::cout <<"  "<< "ret ";
-      // std::cout << number;
-      }else{
-        // std::cout<<"STMT RETURN NULL"<<std::endl;
+        std::string tmp = exp->retvaltmp(str0);
         str0 += " ret ";
-        // str0 += "0";
+        str0 += tmp.c_str();
         str0 += '\n';
         str0 += "\%"+std::to_string(bblockcnt)+':'+'\n';
         bblockcnt += 1;
-        // std::cout<<str0<<std::endl;
+      }else{
+        str0 += " ret ";
+        str0 += '\n';
+        str0 += "\%"+std::to_string(bblockcnt)+':'+'\n';
+        bblockcnt += 1;
       }
     }else if(fl_if == true){
-      // std::cout<<"STMT__IF"<<std::endl;
       std::string tmpexp = son[0]->retvaltmp(str0);
       int tmp_ifcnt = ifcnt;
       ifcnt += 1;
@@ -499,10 +419,8 @@ class StmtAST : public BaseAST {
       }
 
       str0 += "\%end" + std::to_string(tmp_ifcnt) + ":" + '\n';
-      // std::cout<<str0<<std::endl;
 
     }else if(fl_while){
-      // std::cout<<"STMT_WHILE"<<std::endl;
       int tmp_whilecnt = whilecnt;
       whilecnt += 1;
       std::string tmp_end = cur_end;
@@ -520,12 +438,6 @@ class StmtAST : public BaseAST {
       str0 += "\%while_body"+std::to_string(tmp_whilecnt)+':'+'\n';
       son[1]->Dump(str0);
       str0 += " jump \%while_entry"+std::to_string(tmp_whilecnt)+'\n';
-      // if(fl_break_continue != 1){
-      //     str0 += " jump \%while_entry"+std::to_string(tmp_whilecnt)+'\n';
-      //   }else if(fl_break_continue == 1){
-      //     fl_break_continue = 0;
-      //   }
-      
 
       str0 += "\%while_end"+std::to_string(tmp_whilecnt)+':'+'\n';
 
@@ -546,25 +458,21 @@ class StmtAST : public BaseAST {
       return;
     }else if(son[0]->type == _LVal){
       if(son[0]->isArray == false){
-        // std::cout<<"STMT2"<<std::endl;
         std::string tmpexp, tmpident;
         std::string resident;
         tmpexp = son[2]->retvaltmp(str0);
         tmpident = '@'+son[0]->retvaltmp(str0);
         int tmpsymcnt = symcnt;
         std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
-        // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
         while(tmpsymcnt > 0){
           std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
           if((*search_table).find(tmptmpident) != (*search_table).end()){
             resident = tmptmpident;
-            // std::cout<<"resident  "<<resident<<std::endl;
             break;
           }
           search_table = total_table[search_table];
           tmpsymcnt -= 1;
         }
-        // *cur_table = tmp_table;
         if(tmpsymcnt == 0){
           std::cout<<"WRONG AT FIND IDENT"<<std::endl;
           assert(false);
@@ -572,41 +480,33 @@ class StmtAST : public BaseAST {
 
         str0 += " store " + tmpexp + ", " + resident+'\n';
         str0 += '\n';
-        // std::cout<<str0<<std::endl;
       }else if(son[0]->isArray == true){
-        // std::cout<<"STMT2"<<std::endl;
         bool isArrayFunParam = false;
         std::string tmpexp, tmpident;
         std::string resident;
         tmpexp = son[2]->retvaltmp(str0);
         tmpident = '@'+son[0]->retvaltmp(str0);
         int tmpsymcnt = symcnt;
-        // int fullArrayDimsNum = 0;
         std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
         std::map<std::string, int> *search_array_dims_table = cur_array_dims_table;
-        // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
         while(tmpsymcnt > 0){
           std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
           if((*search_table).find(tmptmpident) != (*search_table).end()){
             resident = tmptmpident;
-            // std::cout<<"resident  "<<resident<<std::endl;
             std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
             if(variant_tmp.index() == 0){
               assert(false);
             }
             std::string arrayType = std::get<std::string>(variant_tmp);
-            // std::cout<<arrayType<<std::endl;
             if(arrayType == "ArrayParam"){
               isArrayFunParam = true;
             }
-            // fullArrayDimsNum = (*search_array_dims_table).at(resident);
             break;
           }
           search_table = total_table[search_table];
           search_array_dims_table = total_array_dims_table[search_array_dims_table];
           tmpsymcnt -= 1;
         }
-        // *cur_table = tmp_table;
         if(tmpsymcnt == 0){
           std::cout<<"WRONG AT FIND IDENT"<<std::endl;
           assert(false);
@@ -615,14 +515,11 @@ class StmtAST : public BaseAST {
 
         str0 += " store " + tmpexp + ", " + ptrForLVal+'\n';
         str0 += '\n';
-        // std::cout<<str0<<std::endl;
       }
       
     }else if(son[0]->type == _Exp){
-      // std::cout<<"STMT EXP"<<std::endl;
       son[0]->retvaltmp(str0);
     }else if(son[0]->type == _Block){
-      // std::cout<<"STMT BLOCK"<<std::endl;
       son[0]->Dump(str0);
     }else{
 
@@ -703,14 +600,11 @@ class UnaryExp : public BaseAST {
 
 
   std::string retvaltmp(std::string& str0) override {
-    // std::cout<<"UnaryExp"<<std::endl;
-    // std::cout<<"11111111"<<std::endl;
     std::string tmp1;
     std::string tmp2;
     if(is_ident == true){
       std::string regForFun;
       if(funcTable[ident] == "int"){
-        // std::cout<<"UNARY FUNC INT"<<std::endl;
         regForFun = '%'+std::to_string(tmpcnt);
         tmpcnt++;
         if(son.size()>0){
@@ -763,16 +657,13 @@ class UnaryExp : public BaseAST {
 
     }else if(son[0]->type == _PrimaryExp)
     {
-      // std::cout<<"a11111111"<<std::endl;
       BaseAST* ptr = son[0]; 
       if(ptr->son[0]->type == _Number)
       {
-        // std::cout<<"aa11111111"<<std::endl;
         tmp1 = std::to_string(son[0]->son[0]->val);
         val = son[0]->son[0]->val;
       }else if(ptr->son[0]->type == _Exp)
       {
-        // std::cout<<"ab11111111"<<std::endl;
         tmp1 = ptr->son[0]->retvaltmp(str0);
         val = ptr->son[0]->val;
       }else if(ptr->son[0]->type == _LVal)
@@ -787,33 +678,17 @@ class UnaryExp : public BaseAST {
           std::string resident;
           int tmpsymcnt = symcnt;
           std::map<std::string, std::variant<int, std::string>> *search_table = cur_table;
-          // std::map<std::string, std::variant<int, std::string>> tmp_table = *cur_table;
-          
           std::map<std::string, int> *search_array_dims_table = cur_array_dims_table;
 
           int fullArrayDimsNum = 0;
           
-          // std::cout<<"START FIND IDENT"<<std::endl;
-          // std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
-          // std::cout<<"SYMCNT "<<symcnt<<std::endl;
           while(tmpsymcnt > 0){
             std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
-            // std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
-            // std::cout<<"TMPTMPIDENT "<<tmptmpident<<std::endl;
-
-            // std::map<std::string, std::variant<int, std::string>>::iterator iter;
-            // std::cout<<"ITERATOR"<<std::endl;
-            // for(iter = (*search_table).begin(); iter != (*search_table).end(); ++iter){
-            //   std::cout<<iter->first<<std::endl;
-            // }
             if((*search_table).find(tmptmpident) != (*search_table).end()){
               resident = tmptmpident;
-              // std::cout<<"resident  "<<resident<<std::endl;
-              // std::cout<<"resident  "<<resident<<std::endl;
               std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
               if(variant_tmp.index() == 1){
                 std::string arrayType = std::get<std::string>(variant_tmp);
-                // std::cout<<arrayType<<std::endl;
                 if(arrayType == "ArrayParam"){
                   isArrayFunParam = true;
                   isArrayWithoutSymbol = true;
@@ -829,8 +704,6 @@ class UnaryExp : public BaseAST {
 
                 fullArrayDimsNum = (*search_array_dims_table)[resident];
                 
-                // std::cout<<fullArrayDimsNum<<std::endl;
-                // assert(false);
               
               }
               
@@ -842,7 +715,7 @@ class UnaryExp : public BaseAST {
  
             tmpsymcnt -= 1;          
           }
-          // *cur_table = tmp_table;
+
           if(tmpsymcnt == 0){
             std::cout<<"WRONG AT FIND IDENT"<<std::endl;
           }
@@ -856,9 +729,7 @@ class UnaryExp : public BaseAST {
 
             std::string ptrIdent = ptr->son[0]->getElemPtrForLVal(str0, resident, isArrayFunParam, false);
 
-            // std::string valueForLValArray = '%'+std::to_string(tmpcnt);
-            // tmpcnt++;
-            // str0 += " "+valueForLValArray+" = load "+ptrIdent+"\n";
+
             if(isArrayFunParam == false){
               std::string ptrnum = "0";
               std::string regForPtr = '%'+std::to_string(tmpcnt);
@@ -880,16 +751,11 @@ class UnaryExp : public BaseAST {
             
             
 
-            // std::cout<<str0<<std::endl;
-            // assert(false);
 
             return ptrIdent;
           }else{
             val = value_table[resident];
-            // std::cout<<"RESIIIIDENT    "<<resident<<std::endl;
-            // std::cout<<val<<std::endl;
             std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
-            // std::cout<<variant_tmp.index()<<std::endl;
             if(variant_tmp.index() == 1){
               
               std::string tmptmp;
@@ -897,13 +763,10 @@ class UnaryExp : public BaseAST {
               tmpcnt++;
               tmp1 = '@' + tmp1;
               str0 += " "+tmptmp+" = load "+resident+'\n';
-              // std::cout<<str0<<std::endl;
-              // val = ptr->son[0]->val;
               return tmptmp;
             }else if(variant_tmp.index() == 0){
               int tmpval = std::get<int>(variant_tmp);
               std::string tmp = std::to_string(tmpval);
-              // val = tmpval;
               return tmp;
             }
           }
@@ -922,38 +785,23 @@ class UnaryExp : public BaseAST {
           
           std::map<std::string, int> *search_array_dims_table = cur_array_dims_table;
 
-          // std::cout<<"START FIND IDENT"<<std::endl;
-          // std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
-          // std::cout<<"SYMCNT "<<symcnt<<std::endl;
           while(tmpsymcnt > 0){
             std::string tmptmpident = tmpident + '_' + std::to_string(tmpsymcnt);
-            // std::cout<<"TMPSYMCNT "<<tmpsymcnt<<std::endl;
-            // std::cout<<"TMPTMPIDENT "<<tmptmpident<<std::endl;
-
-            // std::map<std::string, std::variant<int, std::string>>::iterator iter;
-            // std::cout<<"ITERATOR"<<std::endl;
-            // for(iter = (*search_table).begin(); iter != (*search_table).end(); ++iter){
-            //   std::cout<<iter->first<<std::endl;
-            // }
-
+            
             if((*search_table).find(tmptmpident) != (*search_table).end()){
               resident = tmptmpident;
-              // std::cout<<"resident  "<<resident<<std::endl;
+
               std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
               if(variant_tmp.index() == 0){
                 assert(false);
               }
               std::string arrayType = std::get<std::string>(variant_tmp);
-              // std::cout<<arrayType<<std::endl;
+
               if(arrayType == "ArrayParam"){
                 isArrayFunParam = true;
               }
 
               fullArrayDimsNum = (*search_array_dims_table)[resident];
-
-              // std::cout<<fullArrayDimsNum<<std::endl;
-              // assert(false);
-
 
               break;
             }
@@ -961,18 +809,13 @@ class UnaryExp : public BaseAST {
             search_array_dims_table = total_array_dims_table[search_array_dims_table];
             tmpsymcnt -= 1;          
           }
-          // *cur_table = tmp_table;
+
           if(tmpsymcnt == 0){
             std::cout<<"WRONG AT FIND IDENT"<<std::endl;
             assert(false);
           }
 
-          // std::cout<<resident<<std::endl;
-          // std::cout<<isArrayFunParam<<std::endl;
-          // assert(false);
-
-          // bool isRealArrayParam;
-          // assert(false);
+         
 
           if(ptr->son[0]->type != _LVal){
             assert(false);
@@ -991,8 +834,7 @@ class UnaryExp : public BaseAST {
             std::string valueForLValArray = '%'+std::to_string(tmpcnt);
             tmpcnt++;
             str0 += " "+valueForLValArray+" = load "+ptrIdent+"\n";
-            // std::cout<<str0<<std::endl;
-            // assert(false);
+
             return valueForLValArray;
           }else if(curLValDimsNum < fullArrayDimsNum){
             std::string ptrnum = "0";
@@ -1007,38 +849,16 @@ class UnaryExp : public BaseAST {
           }
           
 
-          // val = value_table[resident];
-          // std::cout<<"RESIIIIDENT    "<<resident<<std::endl;
-          // std::cout<<val<<std::endl;
-          // std::variant<int, std::string> variant_tmp = (*search_table).at(resident);
-          // std::cout<<variant_tmp.index()<<std::endl;
-          // if(variant_tmp.index() == 1){
-            
-          //   std::string tmptmp;
-          //   tmptmp = "%" + std::to_string(tmpcnt);
-          //   tmpcnt++;
-          //   tmp1 = '@' + tmp1;
-          //   str0 += " "+tmptmp+" = load "+resident+'\n';
-          //   std::cout<<str0<<std::endl;
-          //   // val = ptr->son[0]->val;
-          //   return tmptmp;
-          // }else if(variant_tmp.index() == 0){
-          //   int tmpval = std::get<int>(variant_tmp);
-          //   std::string tmp = std::to_string(tmpval);
-          //   // val = tmpval;
-          //   return tmp;
-          // }
+          
         }
         
       }
     }else if (son[0]->type == _UnaryOp)
     {
-      // std::cout<<"b11111111"<<std::endl;
-      // std::cout<<son[0]->op<<std::endl;
-      // std::cout<<son[0]->son[0]->op<<std::endl;
+
       if(son[0]->son[0]->op == '-')
       {
-        // std::cout<<"c11111111"<<std::endl;
+
         tmp2 = son[1]->retvaltmp(str0);
         tmp1 = "%" + std::to_string(tmpcnt);
         tmpcnt++;
@@ -1050,10 +870,10 @@ class UnaryExp : public BaseAST {
         str0 += "0, ";
         str0 += tmp2.c_str();
         str0 += "\n";
-        // std::cout<<str0<<std::endl;
+
       }else if (son[0]->son[0]->op == '!')
       {
-        // std::cout<<"d11111111"<<std::endl;
+
         tmp2 = son[1]->retvaltmp(str0);
         tmp1 = "%" + std::to_string(tmpcnt);
         tmpcnt++;
@@ -1065,10 +885,10 @@ class UnaryExp : public BaseAST {
         str0 += "0, ";
         str0 += tmp2.c_str();
         str0 += "\n";
-        // std::cout<<str0<<std::endl;
+
       }else if (son[0]->son[0]->op == '+')
       {
-        // std::cout<<"e11111111"<<std::endl;
+
         tmp1 = son[1]->retvaltmp(str0);
         val = son[1]->val;
       }else
@@ -1083,7 +903,7 @@ class UnaryExp : public BaseAST {
 
 class UnaryOp : public BaseAST {
   public:
-  // char op;
+
   UnaryOp()
   {
     type = _UnaryOp;
@@ -1097,7 +917,7 @@ class UnaryOp : public BaseAST {
 class Op : public BaseAST {
   public:
   Op(TYPE t, char o):BaseAST(t,o){}
-  // char op;
+
   void Dump(std::string& str0) const override {
    
   }
@@ -1110,7 +930,7 @@ class LE : public BaseAST {
   {
     type = _LE;
   }
-  // char op;
+
   void Dump(std::string& str0) const override {
    
   }
@@ -1123,7 +943,7 @@ class GE : public BaseAST {
   {
     type = _GE;
   }
-  // char op;
+
   void Dump(std::string& str0) const override {
    
   }
@@ -1136,7 +956,7 @@ class EQ : public BaseAST {
   {
     type = _EQ;
   }
-  // char op;
+
   void Dump(std::string& str0) const override {
    
   }
@@ -1150,7 +970,7 @@ class NE : public BaseAST {
   {
     type = _NE;
   }
-  // char op;
+
   void Dump(std::string& str0) const override {
    
   }
@@ -1163,7 +983,7 @@ class AND : public BaseAST {
   {
     type = _AND;
   }
-  // char op;
+
   void Dump(std::string& str0) const override {
    
   }
@@ -1177,7 +997,7 @@ class OR : public BaseAST {
   {
     type = _OR;
   }
-  // char op;
+
   void Dump(std::string& str0) const override {
    
   }
@@ -1190,7 +1010,7 @@ class LT : public BaseAST {
   {
     type = _LT;
   }
-  // char op;
+
   void Dump(std::string& str0) const override {
    
   }
@@ -1203,7 +1023,7 @@ class GT : public BaseAST {
   {
     type = _GT;
   }
-  // char op;
+
   void Dump(std::string& str0) const override {
    
   }
@@ -1254,7 +1074,7 @@ class AddExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        // std::cout<<str0<<std::endl;
+
       }else
       {
         tmp2 = tmp1;
@@ -1278,7 +1098,7 @@ class AddExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        // std::cout<<str0<<std::endl;
+
       }  
     }
     return tmp1;
@@ -1340,7 +1160,7 @@ class MulExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        // std::cout<<str0<<std::endl;
+
       }else
       {
         tmp2 = tmp1;
@@ -1372,7 +1192,7 @@ class MulExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        // std::cout<<str0<<std::endl;
+
       } 
       
     }
@@ -1437,7 +1257,7 @@ class RelExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        // std::cout<<str0<<std::endl;
+
       }else
       {
         tmp2 = tmp1;
@@ -1468,7 +1288,7 @@ class RelExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        // std::cout<<str0<<std::endl;
+
       } 
       
     }
@@ -1523,7 +1343,7 @@ class EqExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        // std::cout<<str0<<std::endl;
+
       }else
       {
         tmp2 = tmp1;
@@ -1547,7 +1367,7 @@ class EqExp : public BaseAST {
         str0 += ", ";
         str0 += tmp3.c_str();
         str0 += "\n";
-        // std::cout<<str0<<std::endl;
+
       } 
       
     }
@@ -1571,7 +1391,7 @@ class LAndExp : public BaseAST {
     {
       std::string ktmp = son[0]->retvaltmp(str0);
       val = son[0]->val;
-      // std::cout<<"LANDVAL "<<val<<std::endl;
+
       return ktmp;
     }
     std::string tmp1, tmp2, tmp3;
@@ -1581,17 +1401,11 @@ class LAndExp : public BaseAST {
     for(int i = 0; i < son.size(); i += 2)
     {
       std::string tmptmp = son[i]->retvaltmp(str0);
-      // std::cout<<"son[i].val"<<std::endl;
-      // std::cout<<son[i]->val<<std::endl;
+
       str0 += " br "+tmptmp+", \%land_"+std::to_string(tmplandcnt);
       str0 += +"_"+std::to_string(i)+", \%end_land_zero"+std::to_string(tmplandcnt)+'\n';
       str0 += "\%land_"+std::to_string(tmplandcnt)+"_"+std::to_string(i)+":"+'\n';
 
-      // if(son[i]->val == 0)
-      // {
-      //   val = 0;
-      //   return "0";
-      // }
     }
     str0 += " \%land_res_1_"+std::to_string(tmplandcnt)+" = add 0, 1"+'\n';
     str0 += " store \%land_res_1_"+std::to_string(tmplandcnt)+", @land_res_"+std::to_string(tmplandcnt)+'\n';
@@ -1626,7 +1440,7 @@ class LOrExp : public BaseAST {
     {
       std::string ktmp = son[0]->retvaltmp(str0);
       val = son[0]->val;
-      // std::cout<<"LORVAL "<<val<<std::endl;
+
       return ktmp;
     }
     std::string tmp1, tmp2, tmp3;
@@ -1637,18 +1451,10 @@ class LOrExp : public BaseAST {
     {
 
       std::string tmptmp = son[i]->retvaltmp(str0);
-      // std::cout<<"son[i].val"<<std::endl;
-      // std::cout<<son[i]->val<<std::endl;
       str0 += " br "+tmptmp+", \%end_lor_one"+std::to_string(tmplorcnt)+", \%lor_"+std::to_string(tmplorcnt);
       str0 += +"_"+std::to_string(i)+'\n';
       str0 += "\%lor_"+std::to_string(tmplorcnt)+"_"+std::to_string(i)+":"+'\n';
 
-      // son[i]->retvaltmp(str0);
-      // if(son[i]->val >= 1)
-      // {
-      //   val = 1;
-      //   return "1";
-      // }
     }
     str0 += " \%lor_res_1_"+std::to_string(tmplorcnt)+" = add 0, 0"+'\n';
     str0 += " store \%lor_res_1_"+std::to_string(tmplorcnt)+", @lor_res_"+std::to_string(tmplorcnt)+'\n';
@@ -1664,8 +1470,7 @@ class LOrExp : public BaseAST {
     std::string tmptmpans = "\%ans_lor_"+std::to_string(tmplorcnt);
     str0 += " "+tmptmpans+" = load"+tmpres+'\n';
     return tmptmpans;
-    // val = 0;
-    // return "0";
+
   }
 };
 
@@ -1693,13 +1498,13 @@ class ConstDecl: public BaseAST {
   }
   
   void Dump(std::string& str0) const override {
-    // std::cout<<"ConstDecl"<<std::endl;
+
     for(int i = 1; i < son.size(); i++){
       son[i]->Dump(str0);
     }
   }
   std::string retvaltmp(std::string& str0) override  {
-    // std::cout<<"ConstDecl"<<std::endl;
+
     for(int i = 1; i < son.size(); i++){
       son[i]->retvaltmp(str0);
     }
@@ -1715,13 +1520,13 @@ class ConstDef_dup: public BaseAST {
   }
   
   void Dump(std::string& str0) const override {
-    // std::cout<<"ConstDef_dup"<<std::endl;
+
     for(int i = 0; i < son.size(); i++){
       son[i]->Dump(str0);
     }
   }
   std::string retvaltmp(std::string& str0) override  {
-    // std::cout<<"ConstDef_dup"<<std::endl;
+
     for(int i = 0; i < son.size(); i++){
       son[i]->retvaltmp(str0);
     }
@@ -1760,15 +1565,10 @@ class ConstDef: public BaseAST {
   int constinitval;
   void Dump(std::string& str0) const override {
     if(isArray == false){
-      // std::cout<<"ConstDef"<<std::endl;
-      // std::cout<<ident<<std::endl;
-      // std::cout<<constinitval<<std::endl;
       std::string tmpident = '@'+ident + '_' + std::to_string(symcnt);
-      // std::cout<<"CONST_DEF_TMPIDENT"<<tmpident<<std::endl;
       (*cur_table)[tmpident] = constinitval;
     }else if(isArray == true){
 
-      // std::cout<<"GLOBAL ConstDef"<<std::endl;
       std::string tmp;
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
@@ -1814,10 +1614,6 @@ class ConstDef: public BaseAST {
         globalInitSearch(constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
         str0 += "\n";
 
-        // std::cout<<"******************************************"<<std::endl;
-        // std::cout<<str0<<std::endl;
-        // assert(false);
-
         (*cur_table)[tmp] = "initGlobalArray";
         (*cur_array_dims_table)[tmp] = constNumAST->arrayVector.size();
         value_table[tmp] = 0;
@@ -1833,22 +1629,15 @@ class ConstDef: public BaseAST {
   }
   std::string retvaltmp(std::string& str0) override  {
     if(isArray == false){
-      // std::cout<<"ConstDef"<<std::endl;
-      // std::cout<<ident<<std::endl;
-      // std::cout<<constinitval<<std::endl;
       std::string tmpident = '@'+ident + '_' + std::to_string(symcnt);
-      // std::cout<<"CONST_DEF_TMPIDENT"<<tmpident<<std::endl;
       if(isArray == false){
         (*cur_table)[tmpident] = constinitval;
       }
       return "";
     }else if(isArray == true){
-      // std::cout<<"ConstArrayDef"<<std::endl;
       std::string tmp;
       std::string tmp1;
-      // if(son.size()>0){
-      //   son[0]->retvaltmp(str0);
-      // }
+
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
       if((*curFunvar_table).find(tmp) ==  (*curFunvar_table).end()){
@@ -1873,15 +1662,8 @@ class ConstDef: public BaseAST {
       mulRes *= constNumAST->arrayVector[0];
       reverse(numForEachDim.begin(), numForEachDim.end());
 
-      // for(auto iter = numForEachDim.begin(); iter != numForEachDim.end(); iter++){
-      //   std::cout<<*iter<<std::endl;
-      // }
-
-      
 
 
-      // std::cout<<"ConstArrayDEF  "<<tmp<<std::endl;
-      // std::cout<<"SYMCNT  "<<symcnt<<std::endl;
       if(son.size() > 0){
         std::vector<std::string> initValArray;
         if(son[2]->son.size()>0){
@@ -1894,41 +1676,27 @@ class ConstDef: public BaseAST {
             initValArray.push_back("0");
           }
         }
-             // tmp1 = son[0]->retvaltmp(str0);
-        // str0 += " store " + tmp1 +", " + tmp+'\n';
-        // str0 += "\n";
-
-        // for(auto iter = initValArray.begin(); iter != initValArray.end(); iter++){
-        //   std::cout<<*iter<<std::endl;
-        // }
 
         getElemPtr(tmp, constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
-        // std::cout<<str0<<std::endl;
-        // assert(false);
+
 
         (*cur_table)[tmp] = "initArray";
         (*cur_array_dims_table)[tmp] = constNumAST->arrayVector.size();
         value_table[tmp] = 0;
-        // std::cout<<"INITVAL VARDEF ARRAY ONE"<<tmp1<<std::endl;
-        // std::cout<<str0<<std::endl;
+
       }
       else{
-        // str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
-        // str0 += "\n";
+
         std::vector<std::string> initValArray;
         for(int i = 0; i < mulRes; i++){
           initValArray.push_back("0");
         }
         getElemPtr(tmp, constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
-        // std::cout<<str0<<std::endl;
-        // assert(false);
-
 
         (*cur_table)[tmp] = "initArray";
         (*cur_array_dims_table)[tmp] = constNumAST->arrayVector.size();
         value_table[tmp] = 0;
-        // std::cout<<"INITVAL VARDEF TWO"<<std::to_string(initval)<<std::endl;
-        // std::cout<<str0<<std::endl;
+
       }
       
     }
@@ -1981,7 +1749,6 @@ class BlockItem_dup: public BaseAST {
    
   }
   std::string retvaltmp(std::string& str0) override  {
-    // std::cout<<"BlockItem_dup"<<std::endl;
     for(int i = 0; i < son.size(); i++){
       son[i]->retvaltmp(str0);
     }
@@ -1999,7 +1766,7 @@ class BlockItem: public BaseAST {
    
   }
   std::string retvaltmp(std::string& str0) override  {
-    // std::cout<<"BlockItem"<<std::endl;
+
     if(son[0]->type == _Stmt){
       son[0]->Dump(str0);
     }else if(son[0]->type == _Decl){
@@ -2019,18 +1786,13 @@ class LVal: public BaseAST {
    
   }
   std::string retvaltmp(std::string& str0) override  {
-    // std::cout<<"LVal"<<std::endl;
-    // std::variant<int, std::string> variant_tmp = sym_table.at(ident);
-    // std::cout<<variant_tmp.index()<<std::endl;
-    // val = std::get<int>(variant_tmp);
-    // std::string tmp = std::to_string(val);
+
     std::string tmp = '@'+ident;
     return ident;
   }
   std::string getElemPtrForLVal(std::string& str0, std::string& resident, bool isArrayFunParam, bool isRealArrayParam) override
   {
     if(isRealArrayParam == true){
-      // assert(false);
       std::string ptrIdent = resident;
     
       if(isArrayFunParam == false){
@@ -2170,11 +1932,9 @@ class ConstInitVal: public BaseAST {
       int curIndex = resVec.size();
       std::vector<std::string> sonArrayVec;
       int indexForSonArray = numsForDims.size();
-      // int numsForZero = 0;
       for(int i = 0; i < numsForDims.size(); i++){
         if(curIndex%numsForDims[i]==0){
           indexForSonArray = i;
-          // numsForZero = numsForDims[i];
           break;
         }
       }
@@ -2236,13 +1996,11 @@ class VarDecl: public BaseAST {
   }
   
   void Dump(std::string& str0) const override {
-    // std::cout<<"GLOBAL VarDecl"<<std::endl;
     if(son[1]->type == _VarDef_dup){
       son[1]->Dump(str0);
     }
   }
   std::string retvaltmp(std::string& str0) override  {
-    // std::cout<<"VarDecl"<<std::endl;
     if(son[1]->type == _VarDef_dup){
       son[1]->retvaltmp(str0);
     }
@@ -2260,13 +2018,11 @@ class VarDef_dup: public BaseAST {
   }
   
   void Dump(std::string& str0) const override {
-    // std::cout<<"VarDef_dup"<<std::endl;
     for(int i = 0; i < son.size(); i++){
       son[i]->Dump(str0);
     }
   }
   std::string retvaltmp(std::string& str0) override  {
-    // std::cout<<"VarDef_dup"<<std::endl;
     for(int i = 0; i < son.size(); i++){
       son[i]->retvaltmp(str0);
     }
@@ -2287,7 +2043,6 @@ class VarDef: public BaseAST {
   std::unique_ptr<ConstNumAST> constNumAST;
   void Dump(std::string& str0) const override {
     if(isArray == false){
-      // std::cout<<"GLOBAL VarDef"<<std::endl;
       std::string tmp;
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
@@ -2308,7 +2063,6 @@ class VarDef: public BaseAST {
       (*curFunvar_table)[tmp] = "used";
    
     }else if(isArray == true){
-      // std::cout<<"GLOBAL VarDef"<<std::endl;
       std::string tmp;
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
@@ -2323,7 +2077,6 @@ class VarDef: public BaseAST {
         str0 += tmpvecstr ;
         (*curFunvar_table)[tmp] = "used";
       }
-      // str0 += "global "+tmp+" = alloc i32, ";
 
           
       std::vector<int> numForEachDim;
@@ -2355,9 +2108,6 @@ class VarDef: public BaseAST {
         globalInitSearch(constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
         str0 += "\n";
 
-        // std::cout<<"******************************************"<<std::endl;
-        // std::cout<<str0<<std::endl;
-        // assert(false);
 
         (*cur_table)[tmp] = "initGlobalArray";
         (*cur_array_dims_table)[tmp] = constNumAST->arrayVector.size();
@@ -2375,12 +2125,9 @@ class VarDef: public BaseAST {
   }
   std::string retvaltmp(std::string& str0) override  {
     if(isArray == false){
-      // std::cout<<"VarDef"<<std::endl;
       std::string tmp;
       std::string tmp1;
-      // if(son.size()>0){
-      //   son[0]->retvaltmp(str0);
-      // }
+
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
       if((*curFunvar_table).find(tmp) ==  (*curFunvar_table).end()){
@@ -2388,35 +2135,29 @@ class VarDef: public BaseAST {
         (*curFunvar_table)[tmp] = "used";
       }
     
-      // std::cout<<"VARDEF  "<<tmp<<std::endl;
-      // std::cout<<"SYMCNT  "<<symcnt<<std::endl;
       if(son.size() > 0){
         tmp1 = son[0]->retvaltmp(str0);
         str0 += " store " + tmp1 +", " + tmp+'\n';
         str0 += "\n";
         (*cur_table)[tmp] = tmp1;
         value_table[tmp] = son[0]->val;
-        // std::cout<<"INITVAL VARDEF ONE"<<tmp1<<std::endl;
-        // std::cout<<str0<<std::endl;
+
       }
       else{
         str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
         str0 += "\n";
         (*cur_table)[tmp] = std::to_string(initval);
         value_table[tmp] = 0;
-        // std::cout<<"INITVAL VARDEF TWO"<<std::to_string(initval)<<std::endl;
-        // std::cout<<str0<<std::endl;
+
       }
     
 
       return "";
     }else if(isArray == true){
-      // std::cout<<"VarArrayDef"<<std::endl;
+
       std::string tmp;
       std::string tmp1;
-      // if(son.size()>0){
-      //   son[0]->retvaltmp(str0);
-      // }
+
 
       tmp = '@' + ident + '_' + std::to_string(symcnt);
       if((*curFunvar_table).find(tmp) ==  (*curFunvar_table).end()){
@@ -2441,15 +2182,8 @@ class VarDef: public BaseAST {
       mulRes *= constNumAST->arrayVector[0];
       reverse(numForEachDim.begin(), numForEachDim.end());
 
-      // for(auto iter = numForEachDim.begin(); iter != numForEachDim.end(); iter++){
-      //   std::cout<<*iter<<std::endl;
-      // }
-
-      
 
 
-      // std::cout<<"VARARRAYDEF  "<<tmp<<std::endl;
-      // std::cout<<"SYMCNT  "<<symcnt<<std::endl;
       if(son.size() > 0){
         std::vector<std::string> initValArray;
         if(son[0]->son.size()>0){
@@ -2462,47 +2196,32 @@ class VarDef: public BaseAST {
             initValArray.push_back("0");
           }
         }
-             // tmp1 = son[0]->retvaltmp(str0);
-        // str0 += " store " + tmp1 +", " + tmp+'\n';
-        // str0 += "\n";
 
-        // for(auto iter = initValArray.begin(); iter != initValArray.end(); iter++){
-        //   std::cout<<*iter<<std::endl;
-        // }
 
         getElemPtr(tmp, constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
-        // std::cout<<str0<<std::endl;
-        // assert(false);
+
 
         (*cur_table)[tmp] = "initArray";
         (*cur_array_dims_table)[tmp] = constNumAST->arrayVector.size();
         value_table[tmp] = 0;
 
-        // std::cout<<(*cur_array_dims_table)[tmp]<<std::endl;
-        // assert(false);
-        // std::cout<<"INITVAL VARDEF ARRAY ONE"<<tmp1<<std::endl;
-        // std::cout<<str0<<std::endl;
+
       }
       else{
-        // str0 += " store " + std::to_string(initval) +", " + tmp+'\n';
-        // str0 += "\n";
+
         std::vector<std::string> initValArray;
         for(int i = 0; i < mulRes; i++){
           initValArray.push_back("0");
         }
         getElemPtr(tmp, constNumAST->arrayVector, numForEachDim, 0, str0, initValArray, 0);
-        // std::cout<<str0<<std::endl;
-        // assert(false);
+
 
 
         (*cur_table)[tmp] = "initArray";
         (*cur_array_dims_table)[tmp] = constNumAST->arrayVector.size();
         value_table[tmp] = 0;
         
-        // std::cout<<(*cur_array_dims_table)[tmp]<<std::endl;
-        // assert(false);
-        // std::cout<<"INITVAL VARDEF TWO"<<std::to_string(initval)<<std::endl;
-        // std::cout<<str0<<std::endl;
+
       }
     }
     return "";
@@ -2586,11 +2305,9 @@ class InitVal: public BaseAST {
       int curIndex = resVec.size();
       std::vector<std::string> sonArrayVec;
       int indexForSonArray = numsForDims.size();
-      // int numsForZero = 0;
       for(int i = 0; i < numsForDims.size(); i++){
         if(curIndex%numsForDims[i]==0){
           indexForSonArray = i;
-          // numsForZero = numsForDims[i];
           break;
         }
       }
